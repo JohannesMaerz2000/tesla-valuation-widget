@@ -1,0 +1,21 @@
+end_time,model,variant,status,actual_bid,predicted_bid,error_pct
+2026-02-04,Model 3,m3_p,closed_seller_declined,"€22,700","€25,461",12.17%
+2026-02-04,Model 3,m3_lr,closed_seller_declined,"€22,300","€22,208",0.41%
+2026-02-04,Model 3,m3_lr,closed_seller_accepted,"€16,700","€19,534",16.97%
+2026-02-03,Model 3,m3_sr,closed_seller_declined,"€11,800","€24,516",107.76%
+2026-02-03,Model Y,my_lr,closed_seller_declined,"€22,600","€25,296",11.93%
+2026-02-02,Model Y,my_lr,closed_seller_accepted,"€23,800","€25,067",5.32%
+2026-02-02,Model Y,my_sr,closed_seller_declined,"€26,800","€28,112",4.90%
+2026-02-02,Model Y,my_p,closed_seller_declined,"€20,200","€22,125",9.53%
+2026-02-02,Model Y,my_lr,closed_seller_accepted,"€34,200","€34,080",0.35%
+2026-02-02,Model 3,m3_sr,closed_seller_accepted,"€25,000","€25,027",0.11%
+2026-01-30,Model Y,my_sr,closed_seller_declined,"€34,500","€31,051",10.00%
+2026-01-30,Model Y,my_lr,closed_seller_accepted,"€36,800","€36,230",1.55%
+2026-01-30,Model 3,m3_sr,closed_seller_accepted,"€19,200","€18,952",1.29%
+2026-01-29,Model 3,m3_sr,closed_seller_declined,"€18,800","€19,827",5.46%
+2026-01-29,Model 3,m3_p,closed_seller_accepted,"€23,700","€25,190",6.29%
+2026-01-29,Model 3,m3_lr,closed_seller_declined,"€19,300","€24,947",29.26%
+2026-01-29,Model Y,my_p,closed_seller_accepted,"€35,200","€37,747",7.24%
+2026-01-29,Model Y,my_lr,closed_seller_declined,"€35,200","€33,723",4.19%
+2026-01-29,Model Y,my_sr,closed_seller_declined,"€27,700","€29,208",5.45%
+2026-01-29,Model Y,my_sr,closed_seller_accepted,"€30,400","€30,539",0.46%
