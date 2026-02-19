@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
+import DesktopDashboard from './pages/DesktopDashboard.jsx'
 import MobileValuation from './pages/MobileValuation.jsx'
 
 // distinct ID for Webflow embedding
@@ -18,7 +19,8 @@ if (container) {
       */}
       <MemoryRouter>
         <Routes>
-          <Route path="/" element={<MobileValuation />} />
+          <Route path="/" element={<DesktopDashboard />} />
+          <Route path="/mobile" element={<MobileValuation />} />
         </Routes>
       </MemoryRouter>
     </StrictMode>,
