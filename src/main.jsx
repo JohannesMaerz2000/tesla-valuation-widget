@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import DesktopDashboard from './pages/DesktopDashboard.jsx'
-import MobileValuation from './pages/MobileValuation.jsx'
 
 // distinct ID for Webflow embedding
 const WIDGET_DIV_ID = 'tesla-valuation-widget-container';
@@ -26,7 +25,6 @@ if (container) {
       <MemoryRouter>
         <Routes>
           <Route path="/" element={<DesktopDashboard />} />
-          <Route path="/mobile" element={<MobileValuation />} />
         </Routes>
       </MemoryRouter>
     </StrictMode>,

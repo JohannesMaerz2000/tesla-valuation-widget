@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
 import auctionData from '../data/auctions.json'
 import { calculateValuation, calculateValuationForExplore, calculateDealerInsights, calculateNeighborAverages, VARIANT_SHORT_NAMES, VARIANT_NAMES } from '../utils/valuationAlgorithm'
 import '../App.css'
@@ -1161,9 +1160,6 @@ function App() {
           >
             Customer View
           </button>
-          <Link to="/mobile" className="tab-btn mobile-link">
-            Mobile App
-          </Link>
         </nav>
       </header>
 

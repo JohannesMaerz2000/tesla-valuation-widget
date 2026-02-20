@@ -117,16 +117,6 @@
   font-weight: 600;
 }
 
-.tab-btn.mobile-link {
-  background: var(--color-accent);
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.tab-btn.mobile-link:hover {
-  background: var(--color-accent-hover);
-}
-
 /* ===== MAIN LAYOUT ===== */
 .app-main {
   display: grid;
