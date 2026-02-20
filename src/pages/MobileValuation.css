@@ -1,6 +1,6 @@
 /* Mobile Valuation App — Redesigned */
 
-.mobile-app {
+#tesla-valuation-widget-container .mobile-app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -84,8 +84,13 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .mobile-price-card.error {

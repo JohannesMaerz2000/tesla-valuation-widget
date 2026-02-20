@@ -1,22 +1,16 @@
-/* Reset and base styles */
-*,
-*::before,
-*::after {
+/* Reset and base styles for widget */
+#tesla-valuation-widget-container *,
+#tesla-valuation-widget-container *::before,
+#tesla-valuation-widget-container *::after {
   box-sizing: border-box;
 }
 
-html {
+#tesla-valuation-widget-container {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-body {
   margin: 0;
   min-width: 320px;
-}
-
-#root {
   width: 100%;
 }

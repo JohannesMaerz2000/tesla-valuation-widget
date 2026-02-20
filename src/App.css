@@ -1,6 +1,6 @@
 /* Tesla Valuation App — Redesigned UI */
 
-:root {
+#tesla-valuation-widget-container {
   --color-bg: #f8f9fb;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
@@ -33,11 +33,11 @@
   --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-* {
+#tesla-valuation-widget-container * {
   box-sizing: border-box;
 }
 
-body {
+#tesla-valuation-widget-container {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', Roboto, sans-serif;
   background: var(--color-bg);
@@ -197,7 +197,7 @@ body {
   margin-bottom: 0;
 }
 
-.config-group > label {
+.config-group>label {
   display: block;
   font-size: 0.78rem;
   font-weight: 600;
@@ -1232,8 +1232,13 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-content {
@@ -1248,8 +1253,15 @@ body {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
@@ -1478,6 +1490,7 @@ body {
 
 /* Responsive - Explore */
 @media (max-width: 768px) {
+
   .explore-table th:nth-child(7),
   .explore-table td:nth-child(7),
   .explore-table th:nth-child(8),
