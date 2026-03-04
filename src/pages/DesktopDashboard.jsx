@@ -683,7 +683,7 @@ function ComparableCars({ valuation }) {
       <h2>Comparable Sales (Best Matches)</h2>
       <p className="comparables-intro">
         {hasNeighbors
-          ? 'These are the actual auction results used to calculate your valuation, ordered by match quality.'
+          ? 'These are the actual auction results used to calculate your valuation.'
           : 'No comparable vehicles found. Try adjusting your configuration.'}
       </p>
 
@@ -693,17 +693,13 @@ function ComparableCars({ valuation }) {
             <div key={neighbor.auction_id} className={`comparable-card rank-${index + 1}`}>
               <div className="comparable-header">
                 <span className="rank">#{index + 1} Match</span>
-                <span className="weight">Weight: {neighbor.weight_percentage}%</span>
+                <span className="weight">Match Weight: {neighbor.weight_percentage}%</span>
               </div>
 
               <div className="comparable-price">
                 <div className="price-row">
                   <span className="label">Highest Bid:</span>
                   <span className="value">€{neighbor.original_price.toLocaleString('de-DE')}</span>
-                </div>
-                <div className="price-row adjusted">
-                  <span className="label">Adjusted Price:</span>
-                  <span className="value">€{Math.round(neighbor.adjusted_price).toLocaleString('de-DE')}</span>
                 </div>
               </div>
 
@@ -720,72 +716,6 @@ function ComparableCars({ valuation }) {
                   <span className="label">Auction Date:</span>
                   <span className="value">{new Date(neighbor.end_time).toLocaleDateString('de-DE')}</span>
                 </div>
-                <div className="detail-row">
-                  <span className="label">Status:</span>
-                  <span className={`value status-${neighbor.status.includes('accepted') ? 'sold' : 'declined'}`}>
-                    {neighbor.status.includes('accepted') ? 'Sold' : 'Declined'}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="label">Trust Tier:</span>
-                  <span className={`value tier tier-${neighbor.trust_tier.split(' ')[1]}`}>
-                    {neighbor.trust_tier}
-                  </span>
-                </div>
-              </div>
-
-              <div className="penalties-section">
-                <h4>Distance Penalties</h4>
-                <table className="penalties-table">
-                  <thead>
-                    <tr>
-                      <th>Factor</th>
-                      <th>Difference</th>
-                      <th>Penalty</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {neighbor.penalties.map((p, i) => (
-                      <tr key={i} className={parseFloat(p.penalty) > 0 ? 'has-penalty' : ''}>
-                        <td>{p.factor}</td>
-                        <td>{p.diff}</td>
-                        <td className="penalty-value">{p.penalty}</td>
-                      </tr>
-                    ))}
-                    <tr className="total-row">
-                      <td colSpan="2"><strong>Total Distance Score</strong></td>
-                      <td className="penalty-value"><strong>{neighbor.distance.toFixed(1)}</strong></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="adjustments-section">
-                <h4>Price Adjustments</h4>
-                {neighbor.price_adjustments.length > 0 ? (
-                  <table className="adjustments-table">
-                    <thead>
-                      <tr>
-                        <th>Factor</th>
-                        <th>Reason</th>
-                        <th>Adjustment</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {neighbor.price_adjustments.map((a, i) => (
-                        <tr key={i}>
-                          <td>{a.factor}</td>
-                          <td className="adjustment-reason">{a.description}</td>
-                          <td className={`adjustment-value ${parseFloat(a.adjustment) >= 0 ? 'positive' : 'negative'}`}>
-                            {parseFloat(a.adjustment) >= 0 ? '+' : ''}€{parseInt(a.adjustment).toLocaleString('de-DE')}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="no-adjustments">No adjustments needed</p>
-                )}
               </div>
             </div>
           ))}
