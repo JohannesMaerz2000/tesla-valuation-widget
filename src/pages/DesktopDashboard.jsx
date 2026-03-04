@@ -1,8 +1,6 @@
-import { useState, useMemo } from 'react'
-import auctionData from '../data/auctions.json'
-import { calculateValuation, calculateValuationForExplore, calculateDealerInsights, calculateNeighborAverages, VARIANT_SHORT_NAMES, VARIANT_NAMES } from '../utils/valuationAlgorithm'
+import { useState, useEffect } from 'react'
+import { VARIANT_SHORT_NAMES } from '../utils/valuationAlgorithm'
 import '../App.css'
-
 // Car Configuration Component
 function CarConfigurator({ config, setConfig }) {
   // Combined model+highland selection value
@@ -1103,9 +1101,6 @@ function DealerAuctions({ auctionData, onSelectAuction }) {
 
 // Main App Component
 function App() {
-  const [activeTab, setActiveTab] = useState('valuation'); // 'valuation' or 'explore'
-  const [selectedAuction, setSelectedAuction] = useState(null);
-
   const [config, setConfig] = useState({
     model: 'Model 3',
     variant_clean: 'm3_lr',
@@ -1121,12 +1116,41 @@ function App() {
     first_registration_month: '06'
   });
 
-  const valuation = useMemo(() => {
-    const targetCar = {
-      ...config,
-      first_registration: `${config.first_registration_year}-${config.first_registration_month}-01`
+  const [valuation, setValuation] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchValuation = async () => {
+      setIsLoading(true);
+      try {
+        const targetCar = {
+          ...config,
+          first_registration: `${config.first_registration_year}-${config.first_registration_month}-01`
+        };
+
+        const response = await fetch('/api/valuate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(targetCar)
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        setValuation(data.valuation);
+      } catch (error) {
+        console.error("Error fetching valuation:", error);
+        setValuation({ error: 'Failed to fetch valuation data. Please try again later.' });
+      } finally {
+        setIsLoading(false);
+      }
     };
-    return calculateValuation(targetCar, auctionData);
+
+    fetchValuation();
   }, [config]);
 
   return (
@@ -1134,90 +1158,27 @@ function App() {
       <header className="app-header">
         <h1>Tesla Quick Valuation</h1>
         <p className="tagline">Transparent, data-driven valuations based on real B2B auction results</p>
-
-        <nav className="tab-nav">
-          <button
-            className={`tab-btn ${activeTab === 'valuation' ? 'active' : ''}`}
-            onClick={() => setActiveTab('valuation')}
-          >
-            Quick Valuation
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'explore' ? 'active' : ''}`}
-            onClick={() => setActiveTab('explore')}
-          >
-            Explore Results
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'dealer' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dealer')}
-          >
-            Dealer View
-          </button>
-          <button
-            className={`tab-btn ${activeTab === 'customer' ? 'active' : ''}`}
-            onClick={() => setActiveTab('customer')}
-          >
-            Customer View
-          </button>
-        </nav>
       </header>
 
-      {activeTab === 'customer' ? (
-        <div className="customer-tab">
-          <div className="customer-hero">
-            <h2>What's Your Tesla Worth?</h2>
-            <p>Get an instant, data-driven valuation based on real market sales</p>
-          </div>
-          <main className="app-main">
-            <div className="left-panel">
-              <CarConfigurator config={config} setConfig={setConfig} />
-            </div>
-            <div className="right-panel">
-              <CustomerResults valuation={valuation} config={config} />
-            </div>
-          </main>
+      <main className="app-main">
+        <div className="left-panel">
+          <CarConfigurator config={config} setConfig={setConfig} />
         </div>
-      ) : activeTab === 'valuation' ? (
-        <main className="app-main">
-          <div className="left-panel">
-            <CarConfigurator config={config} setConfig={setConfig} />
-          </div>
 
-          <div className="right-panel">
-            <ValuationDisplay valuation={valuation} config={config} />
-            <ComparableCars valuation={valuation} />
-          </div>
-        </main>
-      ) : activeTab === 'dealer' ? (
-        <main className="app-main explore-main">
-          <DealerAuctions
-            auctionData={auctionData}
-            onSelectAuction={setSelectedAuction}
-          />
-        </main>
-      ) : (
-        <main className="app-main explore-main">
-          <ExploreTable
-            auctionData={auctionData}
-            onSelectAuction={setSelectedAuction}
-          />
-        </main>
-      )}
-
-      {selectedAuction && (
-        activeTab === 'dealer' ? (
-          <DealerViewModal
-            auction={selectedAuction}
-            onClose={() => setSelectedAuction(null)}
-          />
-        ) : (
-          <AuctionDetailModal
-            auction={selectedAuction}
-            onClose={() => setSelectedAuction(null)}
-          />
-        )
-      )}
+        <div className="right-panel">
+          {isLoading && !valuation ? (
+            <div className="valuation-card loading">
+              <h2>Estimated Value</h2>
+              <p>Calculating based on live market data...</p>
+            </div>
+          ) : (
+            <>
+              <ValuationDisplay valuation={valuation} config={config} />
+              <ComparableCars valuation={valuation} />
+            </>
+          )}
+        </div>
+      </main>
 
       <footer className="app-footer">
         <p>
