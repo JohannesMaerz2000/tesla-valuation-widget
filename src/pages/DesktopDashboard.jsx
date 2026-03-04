@@ -1128,7 +1128,11 @@ function App() {
           first_registration: `${config.first_registration_year}-${config.first_registration_month}-01`
         };
 
-        const response = await fetch('/api/valuate', {
+        const ENDPOINT = import.meta.env.PROD
+          ? 'https://tesla-valuation-widget.vercel.app/api/valuate'
+          : '/api/valuate';
+
+        const response = await fetch(ENDPOINT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
