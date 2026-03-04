@@ -19,7 +19,9 @@ Follows a compact, professional **Two-Panel Layout**:
 
 ## 4. Valuation Algorithm Specifications (`valuationAlgorithm.js`)
 
-The calculation relies on two distinct phases: **Hard Filtering** and **Weighted KNN Distance**.
+For an in-depth, low-level guide on how the S3 bucket SQL dumps are transformed via the ETL translation layer (`etl.cjs`) and the precise inner mechanics of the algorithm, please see [Data & Valuation Algorithm (data_and_algorithm.md)](./data_and_algorithm.md).
+
+The calculation broadly relies on two distinct phases: **Hard Filtering** and **Weighted KNN Distance**.
 
 ### Phase A: Hard Filters (Cohort Selection)
 A comparable auction MUST strictly match the target car on these dimensions:
