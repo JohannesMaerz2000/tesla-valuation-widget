@@ -53,72 +53,106 @@ function parsePostgresValues(valuesString) {
     return fields.map(f => f === 'NULL' ? null : f);
 }
 
+// Helper Functions for cleaning
+function determineVariant(row) {
+    const model = row.model;
+    const kw = Number(row.power_kw);
+
+    if (model === 'Model 3') {
+        if (kw >= 208 && kw <= 239) return 'm3_sr';
+        if (kw >= 324 && kw <= 366) return 'm3_lr';
+        if (kw >= 377) return 'm3_p';
+    } else if (model === 'Model Y') {
+        if (kw >= 220 && kw <= 255) return 'my_sr';
+        if (kw >= 370 && kw <= 385) return 'my_lr'; // typical LR range
+        if (kw >= 390) return 'my_p';
+    }
+    return 'unknown';
+}
+
+function determineTaxType(row) {
+    if (row.seller_type === 'company' || row.taxation === 'vat_deductible') return 'vat';
+    return 'margin';
+}
+
+function parseTires(tyres) {
+    if (!tyres || !Array.isArray(tyres)) return 'unknown';
+    if (tyres.length === 2) return '8_tires';
+    if (tyres.length === 1) {
+        const type = tyres[0].type ? tyres[0].type.toLowerCase() : 'unknown';
+        if (type.includes('summer')) return '4_summer';
+        if (type.includes('winter')) return '4_winter';
+        if (type.includes('season')) return '4_all_season';
+    }
+    return 'unknown';
+}
+
+function determineTrustTier(status, bids) {
+    const nBids = Number(bids) || 0;
+    if (status && (status.includes('sold') || status.includes('accepted'))) return 'Tier 1';
+    if (status && status.includes('declined')) {
+        return nBids > 1 ? 'Tier 2' : 'Tier 3';
+    }
+    return 'Tier 3';
+}
+
 async function runEtl() {
-    console.log('🚀 Starting ETL Process...');
+    console.log('🚀 Starting Optimized ETL Process...');
     const deals = new Map();
 
-    // 1. Process Deals
     console.log(`📥 Reading deals from ${DEAL_SQL_PATH}...`);
     const dealStream = readline.createInterface({
         input: fs.createReadStream(DEAL_SQL_PATH),
         crlfDelay: Infinity
     });
 
-    let teslaCount = 0;
     for await (const line of dealStream) {
         if (!line.startsWith('INSERT INTO public.deal')) continue;
-
-        // Quick short-circuit specifically for Tesla (efficiency)
         if (!line.includes("'Tesla'")) continue;
 
         const valuesPartMatch = line.match(/VALUES\s*(.*);$/);
         if (!valuesPartMatch) continue;
 
-        const rawValues = valuesPartMatch[1] + ';';
-        const fields = parsePostgresValues(rawValues);
-
+        const fields = parsePostgresValues(valuesPartMatch[1] + ';');
         if (fields && fields[dealColumns.indexOf('make')] === 'Tesla') {
             const model = fields[dealColumns.indexOf('model')];
             if (model === 'Model 3' || model === 'Model Y') {
-                const dealData = {};
-                // Only map fields we actually care about to keep JSON tiny
-                const keepFields = [
-                    'id', 'model', 'variant', 'first_registration', 'mileage', 'power_kw',
-                    'taxation', 'accident_free_seller', 'accident_free_cardentity',
-                    'tesla_autopilot', 'heatpump', 'trailer_hitch', 'trailer_hitch_seller',
-                    'tyres', 'equipment'
-                ];
+                const rawDeal = {};
+                dealColumns.forEach((col, i) => rawDeal[col] = fields[i]);
 
-                for (let i = 0; i < dealColumns.length; i++) {
-                    const col = dealColumns[i];
-                    if (keepFields.includes(col)) {
-                        let val = fields[i];
-                        if (val === 'true') val = true;
-                        if (val === 'false') val = false;
-                        if (col === 'mileage' || col === 'power_kw') val = Number(val);
-                        if (col === 'tyres' && val) val = JSON.parse(val);
-                        dealData[col] = val;
-                    }
+                // Clean/Transform for the Algorithm
+                const cleanDeal = {
+                    id: rawDeal.id,
+                    model: rawDeal.model,
+                    variant_clean: determineVariant(rawDeal),
+                    is_highland: String(rawDeal.variant).includes('Highland'),
+                    tax_type: determineTaxType(rawDeal),
+                    is_accident_free: rawDeal.accident_free_seller === 'true' && rawDeal.accident_free_cardentity === 'true',
+                    tire_strategy: parseTires(rawDeal.tyres ? JSON.parse(rawDeal.tyres) : null),
+                    has_hitch: rawDeal.trailer_hitch_seller === 'true',
+                    autopilot: (rawDeal.tesla_autopilot === 'Full self driving' ? 'FSD' :
+                        rawDeal.tesla_autopilot === 'Enhanced' ? 'EAP' : 'Standard'),
+                    has_heatpump: rawDeal.heatpump === 'true',
+                    mileage: Number(rawDeal.mileage),
+                    first_registration: rawDeal.first_registration
+                };
+
+                if (cleanDeal.variant_clean !== 'unknown') {
+                    deals.set(cleanDeal.id, cleanDeal);
                 }
-                deals.set(dealData.id, dealData);
-                teslaCount++;
             }
         }
     }
-    console.log(`✅ Loaded ${teslaCount} Tesla Model 3 / Model Y deals.`);
 
-    // 2. Process Auctions (Only for the extracted Teslas)
-    console.log(`📥 Reading auctions from ${AUCTION_SQL_PATH}...`);
+    console.log(`📥 Linking auctions...`);
     const auctionStream = readline.createInterface({
         input: fs.createReadStream(AUCTION_SQL_PATH),
         crlfDelay: Infinity
     });
 
     const dataset = [];
-
     for await (const line of auctionStream) {
         if (!line.startsWith('INSERT INTO public.auction')) continue;
-
         const valuesPartMatch = line.match(/VALUES\s*(.*);$/);
         if (!valuesPartMatch) continue;
 
@@ -127,40 +161,28 @@ async function runEtl() {
 
         const dealId = fields[auctionColumns.indexOf('deal_id')];
         if (deals.has(dealId)) {
-            const auctionData = {};
-            const keepFields = [
-                'id', 'deal_id', 'start_time', 'end_time', 'status',
-                'highest_bid_amount', 'number_of_bids'
-            ];
-
-            for (let i = 0; i < auctionColumns.length; i++) {
-                const col = auctionColumns[i];
-                if (keepFields.includes(col)) {
-                    let val = fields[i];
-                    if (col === 'highest_bid_amount' || col === 'number_of_bids') val = Number(val);
-                    auctionData[col] = val;
-                }
-            }
-
-            // Merge Deal and Auction Data
             const deal = deals.get(dealId);
+            const status = fields[auctionColumns.indexOf('status')];
+            const numBids = Number(fields[auctionColumns.indexOf('number_of_bids')]);
+            const endTime = fields[auctionColumns.indexOf('end_time')];
+
             dataset.push({
-                ...deal, // All the Deal metrics
-                auction: auctionData
+                ...deal,
+                auction_id: fields[auctionColumns.indexOf('id')],
+                final_price: Number(fields[auctionColumns.indexOf('highest_bid_amount')]),
+                status: status,
+                number_of_bids: numBids,
+                end_time: endTime,
+                trust_tier: determineTrustTier(status, numBids),
+                age_at_auction_months: Math.round((new Date(endTime) - new Date(deal.first_registration)) / (1000 * 60 * 60 * 24 * 30.44))
             });
         }
     }
 
-    console.log(`✅ Linked ${dataset.length} auctions to Tesla deals.`);
-
-    // 3. Write Output
-    console.log(`💾 Writing JSON output to ${OUTPUT_JSON_PATH}...`);
+    console.log(`💾 Writing ${dataset.length} cleaned records to ${OUTPUT_JSON_PATH}...`);
     fs.writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(dataset, null, 2));
-
-    const stats = fs.statSync(OUTPUT_JSON_PATH);
-    console.log(`🎉 Done! Created tesla_data.json (${(stats.size / 1024 / 1024).toFixed(2)} MB)`);
+    console.log('🎉 ETL Complete.');
 }
 
-runEtl().catch(err => {
-    console.error('Fatal Error:', err);
-});
+runEtl().catch(err => console.error('Fatal Error:', err));
+
