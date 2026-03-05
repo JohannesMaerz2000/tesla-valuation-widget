@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import '../App.css'
 
 const MODEL_CHOICES = [
@@ -394,6 +394,18 @@ function DesktopDashboard() {
   const [valuation, setValuation] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [activeStep, setActiveStep] = useState(1)
+  const [layoutLockHeight, setLayoutLockHeight] = useState(null)
+  const journeyLayoutRef = useRef(null)
+
+  useEffect(() => {
+    if (isLoading || layoutLockHeight === null) return undefined
+
+    const unlockFrame = window.requestAnimationFrame(() => {
+      setLayoutLockHeight(null)
+    })
+
+    return () => window.cancelAnimationFrame(unlockFrame)
+  }, [isLoading, layoutLockHeight])
 
   const updateConfig = (update) => {
     setConfig((previous) => {
@@ -407,6 +419,11 @@ function DesktopDashboard() {
   }
 
   const calculateValuation = async () => {
+    const currentLayoutHeight = journeyLayoutRef.current?.getBoundingClientRect().height
+    if (currentLayoutHeight) {
+      setLayoutLockHeight(Math.ceil(currentLayoutHeight))
+    }
+
     setActiveStep(2)
     setIsLoading(true)
 
@@ -447,7 +464,11 @@ function DesktopDashboard() {
         <p>Configure your car and reveal an instant market estimate from real B2B auction data.</p>
       </header>
 
-      <main className="journey-layout">
+      <main
+        ref={journeyLayoutRef}
+        className="journey-layout"
+        style={layoutLockHeight ? { minHeight: `${layoutLockHeight}px` } : undefined}
+      >
         {activeStep === 1 ? (
           <Configurator
             config={config}
