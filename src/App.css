@@ -20,6 +20,9 @@
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
+  overscroll-behavior-y: contain;
+  overflow-anchor: none;
+  touch-action: pan-y;
   background:
     radial-gradient(circle at 5% -10%, #dbeafe 0%, transparent 42%),
     radial-gradient(circle at 95% 5%, #fee2e2 0%, transparent 32%),
@@ -398,14 +401,20 @@
 @media (max-width: 560px) {
   #tesla-valuation-widget-container {
     padding: 12px;
+    background: var(--bg);
   }
 
   .widget-header {
     padding: 16px;
+    backdrop-filter: none;
   }
 
   .widget-header h1 {
     font-size: 1.25rem;
+  }
+
+  .journey-card {
+    box-shadow: 0 8px 18px rgba(9, 19, 40, 0.06);
   }
 
   .two-columns,

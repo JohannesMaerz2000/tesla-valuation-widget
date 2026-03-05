@@ -14,9 +14,8 @@ console.log('Tesla Widget Attempting to Mount...');
 console.log('Container found:', !!container);
 
 if (container) {
-  // Add a min-height and background directly to ensure it's visible while loading
+  // Ensure the embed container is visible before React hydration.
   if (container.id === WIDGET_DIV_ID) {
-    container.style.minHeight = '600px';
     container.style.display = 'block';
   }
 
