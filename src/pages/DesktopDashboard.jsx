@@ -53,18 +53,6 @@ const MONTH_CHOICES = [
   { value: '12', label: 'December' }
 ]
 
-const CONFIG_FLOW = [
-  { title: 'Model', subtitle: 'Choose your Tesla model family.' },
-  { title: 'Variant & registration', subtitle: 'Select trim and first registration date.' },
-  { title: 'Mileage & tax type', subtitle: 'Set the current mileage and tax basis.' },
-  { title: 'Accident history', subtitle: 'Tell us if the car is accident-free.' },
-  { title: 'Autopilot & tires', subtitle: 'Choose software package and tire setup.' },
-  { title: 'Heat pump', subtitle: 'Confirm heat pump availability.' },
-  { title: 'Hitch', subtitle: 'Confirm whether a trailer hitch is installed.' }
-]
-
-const LAST_CONFIG_STEP = CONFIG_FLOW.length - 1
-
 const DEFAULT_CONFIG = {
   model: 'Model 3',
   variant_clean: 'm3_lr',
@@ -141,19 +129,7 @@ function ChoiceGroup({ options, value, onChange }) {
   )
 }
 
-function ConfigStepProgress({ step }) {
-  return (
-    <ol className="config-progress" aria-label="Configurator progress">
-      {CONFIG_FLOW.map((entry, index) => (
-        <li key={entry.title} className={index <= step ? 'is-active' : ''}>
-          <span>{index + 1}</span>
-        </li>
-      ))}
-    </ol>
-  )
-}
-
-function ConfigStepFields({ step, config, onChange }) {
+function Configurator({ config, onChange, onCalculate, isLoading }) {
   const modelSelectionValue = getModelSelectionValue(config)
   const variantOptions = VARIANT_CHOICES[config.model]
 
@@ -187,24 +163,19 @@ function ConfigStepFields({ step, config, onChange }) {
     })
   }
 
-  if (step === 0) {
-    return (
+  return (
+    <section className="journey-card" aria-label="Step 1 Configure your car">
+      <div className="step-header">
+        <span className="step-index">Step 1</span>
+        <h2>Configure your Tesla</h2>
+      </div>
+
       <div className="form-grid">
         <div className="field">
           <label>Model</label>
-          <ChoiceGroup
-            options={MODEL_CHOICES.map(({ value, label }) => ({ value, label }))}
-            value={modelSelectionValue}
-            onChange={handleModelSelection}
-          />
+          <ChoiceGroup options={MODEL_CHOICES.map(({ value, label }) => ({ value, label }))} value={modelSelectionValue} onChange={handleModelSelection} />
         </div>
-      </div>
-    )
-  }
 
-  if (step === 1) {
-    return (
-      <div className="form-grid">
         <div className="field">
           <label>Variant</label>
           <ChoiceGroup options={variantOptions} value={config.variant_clean} onChange={(value) => onChange({ variant_clean: value })} />
@@ -229,13 +200,7 @@ function ConfigStepFields({ step, config, onChange }) {
             </select>
           </div>
         </div>
-      </div>
-    )
-  }
 
-  if (step === 2) {
-    return (
-      <div className="form-grid">
         <div className="field">
           <label>Mileage (km)</label>
           <input
@@ -252,13 +217,7 @@ function ConfigStepFields({ step, config, onChange }) {
           <label>Tax type</label>
           <ChoiceGroup options={TAX_CHOICES} value={config.tax_type} onChange={(value) => onChange({ tax_type: value })} />
         </div>
-      </div>
-    )
-  }
 
-  if (step === 3) {
-    return (
-      <div className="form-grid">
         <div className="field">
           <label>Accident history</label>
           <ChoiceGroup
@@ -270,13 +229,7 @@ function ConfigStepFields({ step, config, onChange }) {
             onChange={(value) => onChange({ is_accident_free: value === 'accident_free' })}
           />
         </div>
-      </div>
-    )
-  }
 
-  if (step === 4) {
-    return (
-      <div className="form-grid">
         <div className="field">
           <label>Autopilot</label>
           <ChoiceGroup options={AUTOPILOT_CHOICES} value={config.autopilot} onChange={(value) => onChange({ autopilot: value })} />
@@ -286,89 +239,23 @@ function ConfigStepFields({ step, config, onChange }) {
           <label>Tires included</label>
           <ChoiceGroup options={TIRE_CHOICES} value={config.tire_strategy} onChange={(value) => onChange({ tire_strategy: value })} />
         </div>
-      </div>
-    )
-  }
 
-  if (step === 5) {
-    return (
-      <div className="form-grid">
-        <div className="field">
-          <label>Heat pump</label>
-          <ChoiceGroup
-            options={[
-              { value: 'yes', label: 'Present' },
-              { value: 'no', label: 'Not present' }
-            ]}
-            value={config.has_heatpump ? 'yes' : 'no'}
-            onChange={(value) => onChange({ has_heatpump: value === 'yes' })}
-          />
+        <div className="field two-columns toggles">
+          <label className="toggle">
+            <input type="checkbox" checked={config.has_heatpump} onChange={(event) => onChange({ has_heatpump: event.target.checked })} />
+            <span>Heat pump</span>
+          </label>
+
+          <label className="toggle">
+            <input type="checkbox" checked={config.has_hitch} onChange={(event) => onChange({ has_hitch: event.target.checked })} />
+            <span>Trailer hitch</span>
+          </label>
         </div>
       </div>
-    )
-  }
 
-  return (
-    <div className="form-grid">
-      <div className="field">
-        <label>Trailer hitch</label>
-        <ChoiceGroup
-          options={[
-            { value: 'yes', label: 'Installed' },
-            { value: 'no', label: 'No hitch' }
-          ]}
-          value={config.has_hitch ? 'yes' : 'no'}
-          onChange={(value) => onChange({ has_hitch: value === 'yes' })}
-        />
-      </div>
-    </div>
-  )
-}
-
-function Configurator({ config, onChange, onCalculate, isLoading, step, onStepChange }) {
-  const flowEntry = CONFIG_FLOW[step]
-
-  return (
-    <section className="journey-card" aria-label="Step 1 Configure your car">
-      <div className="step-header">
-        <span className="step-index">Step 1</span>
-        <h2>Configure your Tesla</h2>
-      </div>
-
-      <ConfigStepProgress step={step} />
-
-      <div className="flow-header">
-        <h3>{flowEntry.title}</h3>
-        <p>{flowEntry.subtitle}</p>
-      </div>
-
-      <ConfigStepFields step={step} config={config} onChange={onChange} />
-
-      <div className="step-actions">
-        <button
-          type="button"
-          className="secondary-button inline"
-          onClick={() => onStepChange(Math.max(0, step - 1))}
-          disabled={step === 0 || isLoading}
-        >
-          Back
-        </button>
-
-        {step < LAST_CONFIG_STEP ? (
-          <button
-            type="button"
-            className="primary-button inline"
-            onClick={() => onStepChange(Math.min(LAST_CONFIG_STEP, step + 1))}
-            disabled={isLoading}
-          >
-            Continue
-          </button>
-        ) : (
-          <button type="button" className="primary-button inline" onClick={onCalculate} disabled={isLoading}>
-            {isLoading ? 'Calculating...' : 'Show estimated price'}
-          </button>
-        )}
-      </div>
+      <button type="button" className="primary-button" onClick={onCalculate} disabled={isLoading}>
+        {isLoading ? 'Calculating...' : 'Show estimated price'}
+      </button>
     </section>
   )
 }
@@ -437,7 +324,22 @@ function formatDiffAge(deltaMonths) {
   return formatDiffMonths(deltaMonths)
 }
 
-function ResultState({ valuation, configSnapshot, onBack }) {
+function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
+  if (isLoading) {
+    return (
+      <section className="journey-card result-card" aria-label="Valuation loading state">
+        <div className="step-header">
+          <span className="step-index">Step 2</span>
+          <h2>Calculating estimate</h2>
+        </div>
+        <p className="empty-copy">Matching your car against recent Tesla auction sales...</p>
+        <button type="button" className="secondary-button" onClick={onBack}>
+          Edit configuration
+        </button>
+      </section>
+    )
+  }
+
   if (!valuation) {
     return <EmptyResultState />
   }
@@ -492,7 +394,6 @@ function DesktopDashboard() {
   const [valuation, setValuation] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [activeStep, setActiveStep] = useState(1)
-  const [configStep, setConfigStep] = useState(0)
 
   const updateConfig = (update) => {
     setConfig((previous) => {
@@ -502,9 +403,11 @@ function DesktopDashboard() {
 
       return { ...previous, ...update }
     })
+
   }
 
   const calculateValuation = async () => {
+    setActiveStep(2)
     setIsLoading(true)
 
     const snapshot = { ...config }
@@ -529,11 +432,9 @@ function DesktopDashboard() {
 
       const payload = await response.json()
       setValuation(payload.valuation)
-      setActiveStep(2)
     } catch (error) {
       console.error('Error fetching valuation:', error)
       setValuation({ error: 'Failed to fetch valuation data. Please try again later.' })
-      setActiveStep(2)
     } finally {
       setIsLoading(false)
     }
@@ -553,13 +454,12 @@ function DesktopDashboard() {
             onChange={updateConfig}
             onCalculate={calculateValuation}
             isLoading={isLoading}
-            step={configStep}
-            onStepChange={setConfigStep}
           />
         ) : (
           <ResultState
             valuation={valuation}
             configSnapshot={configSnapshot}
+            isLoading={isLoading}
             onBack={() => setActiveStep(1)}
           />
         )}
