@@ -47,7 +47,6 @@ export default async function handler(req, res) {
             cohort_stats: rawValuation.cohort_stats ? { size: rawValuation.cohort_stats.size } : null,
             error: rawValuation.error,
             neighbors: rawValuation.neighbors ? rawValuation.neighbors.map(n => ({
-                auction_id: n.auction_id,
                 weight_percentage: n.weight_percentage,
                 original_price: n.original_price,
                 mileage: n.mileage,
