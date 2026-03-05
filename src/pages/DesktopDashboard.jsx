@@ -2,23 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import '../App.css'
 
 const MODEL_CHOICES = [
-  { value: 'model_3', label: 'Model 3', model: 'Model 3', isHighland: false, defaultVariant: 'm3_lr' },
-  { value: 'model_3_highland', label: 'Model 3 Highland', model: 'Model 3', isHighland: true, defaultVariant: 'm3_lr' },
-  { value: 'model_y', label: 'Model Y', model: 'Model Y', isHighland: false, defaultVariant: 'my_lr' }
+  { value: 'model_3', label: 'Model 3', model: 'Model 3', isHighland: false },
+  { value: 'model_3_highland', label: 'Model 3 Highland', model: 'Model 3', isHighland: true },
+  { value: 'model_y', label: 'Model Y', model: 'Model Y', isHighland: false }
 ]
 
-const VARIANT_CHOICES = {
-  'Model 3': [
-    { value: 'm3_sr', label: 'Standard Range' },
-    { value: 'm3_lr', label: 'Long Range' },
-    { value: 'm3_p', label: 'Performance' }
-  ],
-  'Model Y': [
-    { value: 'my_sr', label: 'Standard Range' },
-    { value: 'my_lr', label: 'Long Range' },
-    { value: 'my_p', label: 'Performance' }
-  ]
-}
+const VARIANT_CHOICES = [
+  { value: 'sr', label: 'Standard Range' },
+  { value: 'lr', label: 'Long Range' },
+  { value: 'p', label: 'Performance' }
+]
 
 const AUTOPILOT_CHOICES = [
   { value: 'Standard', label: 'Standard' },
@@ -54,28 +47,35 @@ const MONTH_CHOICES = [
 ]
 
 const DEFAULT_CONFIG = {
-  model: 'Model 3',
-  variant_clean: 'm3_lr',
-  is_highland: false,
-  tax_type: 'margin',
-  is_accident_free: true,
-  autopilot: 'Standard',
-  tire_strategy: '4_summer',
-  has_heatpump: true,
+  model: null,
+  variant_tier: null,
+  is_highland: null,
+  tax_type: null,
+  autopilot: null,
+  tire_strategy: null,
+  has_heatpump: false,
   has_hitch: false,
-  mileage: 50000,
-  first_registration_year: '2022',
-  first_registration_month: '06'
+  mileage: '',
+  first_registration_year: '',
+  first_registration_month: ''
 }
 
 function getModelSelectionValue(config) {
+  if (!config.model) return null
   if (config.model === 'Model Y') return 'model_y'
   return config.is_highland ? 'model_3_highland' : 'model_3'
 }
 
 function buildTargetCar(config) {
+  const variant_clean = config.model === 'Model Y'
+    ? `my_${config.variant_tier}`
+    : `m3_${config.variant_tier}`
+
   return {
     ...config,
+    variant_clean,
+    is_accident_free: true,
+    mileage: Number(config.mileage),
     first_registration: `${config.first_registration_year}-${config.first_registration_month}-01`
   }
 }
@@ -129,9 +129,8 @@ function ChoiceGroup({ options, value, onChange }) {
   )
 }
 
-function Configurator({ config, onChange, onCalculate, isLoading }) {
+function Configurator({ config, onChange, onCalculate, isLoading, isComplete }) {
   const modelSelectionValue = getModelSelectionValue(config)
-  const variantOptions = VARIANT_CHOICES[config.model]
 
   const currentYear = new Date().getFullYear()
   const minYear = config.is_highland ? 2023 : 2019
@@ -151,12 +150,12 @@ function Configurator({ config, onChange, onCalculate, isLoading }) {
       const next = {
         ...prev,
         model: nextModel.model,
-        is_highland: nextModel.isHighland,
-        variant_clean: nextModel.defaultVariant
+        is_highland: nextModel.isHighland
       }
 
-      if (nextModel.isHighland && Number(prev.first_registration_year) < 2023) {
-        next.first_registration_year = '2024'
+      if (nextModel.isHighland && prev.first_registration_year && Number(prev.first_registration_year) < 2023) {
+        next.first_registration_year = ''
+        next.first_registration_month = ''
       }
 
       return next
@@ -178,13 +177,14 @@ function Configurator({ config, onChange, onCalculate, isLoading }) {
 
         <div className="field">
           <label>Variant</label>
-          <ChoiceGroup options={variantOptions} value={config.variant_clean} onChange={(value) => onChange({ variant_clean: value })} />
+          <ChoiceGroup options={VARIANT_CHOICES} value={config.variant_tier} onChange={(value) => onChange({ variant_tier: value })} />
         </div>
 
         <div className="field two-columns">
           <div>
             <label>First registration month</label>
             <select value={config.first_registration_month} onChange={(event) => onChange({ first_registration_month: event.target.value })}>
+              <option value="">Select month</option>
               {MONTH_CHOICES.map((month) => (
                 <option key={month.value} value={month.value}>{month.label}</option>
               ))}
@@ -194,6 +194,7 @@ function Configurator({ config, onChange, onCalculate, isLoading }) {
           <div>
             <label>First registration year</label>
             <select value={config.first_registration_year} onChange={(event) => onChange({ first_registration_year: event.target.value })}>
+              <option value="">Select year</option>
               {yearOptions.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
@@ -208,26 +209,14 @@ function Configurator({ config, onChange, onCalculate, isLoading }) {
             min="0"
             step="1000"
             value={config.mileage}
-            onChange={(event) => onChange({ mileage: Number.parseInt(event.target.value, 10) || 0 })}
+            onChange={(event) => onChange({ mileage: event.target.value })}
           />
-          <p className="field-hint">{Math.round(config.mileage / 1000)}k km</p>
+          {config.mileage !== '' ? <p className="field-hint">{Math.round(Number(config.mileage) / 1000)}k km</p> : null}
         </div>
 
         <div className="field">
           <label>Tax type</label>
           <ChoiceGroup options={TAX_CHOICES} value={config.tax_type} onChange={(value) => onChange({ tax_type: value })} />
-        </div>
-
-        <div className="field">
-          <label>Accident history</label>
-          <ChoiceGroup
-            options={[
-              { value: 'accident_free', label: 'Accident-free' },
-              { value: 'has_accident', label: 'Has accident' }
-            ]}
-            value={config.is_accident_free ? 'accident_free' : 'has_accident'}
-            onChange={(value) => onChange({ is_accident_free: value === 'accident_free' })}
-          />
         </div>
 
         <div className="field">
@@ -253,7 +242,7 @@ function Configurator({ config, onChange, onCalculate, isLoading }) {
         </div>
       </div>
 
-      <button type="button" className="primary-button" onClick={onCalculate} disabled={isLoading}>
+      <button type="button" className="primary-button" onClick={onCalculate} disabled={isLoading || !isComplete}>
         {isLoading ? 'Calculating...' : 'Show estimated price'}
       </button>
     </section>
@@ -367,12 +356,6 @@ function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
         <h2>Your estimated market price</h2>
       </div>
 
-      {!configSnapshot.is_accident_free ? (
-        <p className="warning-copy">
-          This estimate is based on accident-free comparables. Accident damage usually lowers real resale price.
-        </p>
-      ) : null}
-
       <div className="price-block">
         <p className="price-main">{formatCurrency(valuation.estimated_value)}</p>
         <p className="price-range">
@@ -409,6 +392,20 @@ function DesktopDashboard() {
   const [layoutLockHeight, setLayoutLockHeight] = useState(null)
   const journeyLayoutRef = useRef(null)
 
+  const isConfigComplete = useMemo(() => {
+    return (
+      !!config.model &&
+      !!config.variant_tier &&
+      !!config.tax_type &&
+      !!config.autopilot &&
+      !!config.tire_strategy &&
+      config.first_registration_month !== '' &&
+      config.first_registration_year !== '' &&
+      config.mileage !== '' &&
+      Number(config.mileage) >= 0
+    )
+  }, [config])
+
   useEffect(() => {
     if (isLoading || layoutLockHeight === null) return undefined
 
@@ -431,6 +428,8 @@ function DesktopDashboard() {
   }
 
   const calculateValuation = async () => {
+    if (!isConfigComplete) return
+
     const currentLayoutHeight = journeyLayoutRef.current?.getBoundingClientRect().height
     if (currentLayoutHeight) {
       setLayoutLockHeight(Math.ceil(currentLayoutHeight))
@@ -487,6 +486,7 @@ function DesktopDashboard() {
             onChange={updateConfig}
             onCalculate={calculateValuation}
             isLoading={isLoading}
+            isComplete={isConfigComplete}
           />
         ) : (
           <ResultState
