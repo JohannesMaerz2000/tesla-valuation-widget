@@ -332,7 +332,19 @@ function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
           <span className="step-index">Step 2</span>
           <h2>Calculating estimate</h2>
         </div>
-        <p className="empty-copy">Matching your car against recent Tesla auction sales...</p>
+        <div className="loading-shell" aria-live="polite" aria-busy="true">
+          <div className="loading-status">
+            <span className="loading-spinner" aria-hidden="true" />
+            <p className="loading-copy">Matching your car against recent Tesla auction sales...</p>
+          </div>
+
+          <div className="loading-card" aria-hidden="true">
+            <span className="loading-line loading-line-wide" />
+            <span className="loading-line loading-line-mid" />
+            <span className="loading-line loading-line-short" />
+          </div>
+        </div>
+
         <button type="button" className="secondary-button" onClick={onBack}>
           Edit configuration
         </button>
