@@ -32,7 +32,13 @@ export default async function handler(req, res) {
         if (!cachedData) {
             const dataPath = path.join(process.cwd(), 'tesla_data.json');
             const fileContents = fs.readFileSync(dataPath, 'utf8');
-            cachedData = JSON.parse(fileContents);
+            const parsedData = JSON.parse(fileContents);
+
+            // Deduct 1500€ margin from the highest bid amount (final_price) to use the net customer payout
+            cachedData = parsedData.map(car => ({
+                ...car,
+                final_price: car.final_price ? car.final_price - 1500 : car.final_price
+            }));
         }
 
         // Call the valuation algorithm
