@@ -55,7 +55,7 @@ export default async function handler(req, res) {
             neighbors: rawValuation.neighbors ? rawValuation.neighbors.map(n => ({
                 weight_percentage: n.weight_percentage,
                 original_price: n.original_price,
-                mileage: n.mileage,
+                mileage: Math.round(n.mileage / 1000) * 1000,
                 age_at_auction_months: n.age_at_auction_months,
                 end_time: n.end_time
             })) : []
