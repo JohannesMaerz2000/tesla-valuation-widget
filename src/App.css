@@ -1,25 +1,24 @@
 #tesla-valuation-widget-container {
-  --bg: #f2f4f7;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-muted: #f8fafc;
+  --surface-muted: #f7fffc;
   --text: #121926;
   --text-soft: #5b6475;
-  --border: #dce3ed;
-  --accent: #0f172a;
-  --accent-strong: #020617;
+  --border: #d7eee7;
+  --accent: #3ec099;
+  --accent-strong: #2ea880;
+  --accent-soft: #e8f8f3;
+  --accent-border: #98ddca;
   --warning-bg: #fff7ed;
   --warning-text: #9a3412;
   --error-bg: #fef2f2;
   --error-text: #991b1b;
-  --shadow: 0 14px 36px rgba(9, 19, 40, 0.08);
+  --shadow: 0 14px 32px rgba(36, 102, 83, 0.1);
 }
 
 #tesla-valuation-widget-container {
   min-height: 100%;
-  background:
-    radial-gradient(circle at 5% -10%, #dbeafe 0%, transparent 42%),
-    radial-gradient(circle at 95% 5%, #fee2e2 0%, transparent 32%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: 'Avenir Next', 'Segoe UI', sans-serif;
   padding: 20px 14px;
@@ -39,10 +38,10 @@
 
 .widget-header {
   padding: 18px 20px;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(220, 227, 237, 0.7);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--border);
   border-radius: 18px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(3px);
 }
 
 .widget-header h1 {
@@ -71,7 +70,7 @@
 }
 
 .result-card {
-  background: linear-gradient(165deg, #ffffff 0%, #f7fafc 100%);
+  background: linear-gradient(165deg, #ffffff 0%, var(--accent-soft) 100%);
 }
 
 .journey-card.muted {
@@ -99,9 +98,9 @@
   min-width: 64px;
   padding: 4px 10px;
   border-radius: 999px;
-  border: 1px solid #c8d2e1;
-  background: #f1f5f9;
-  color: #24334d;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
+  color: #1f7f62;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -140,7 +139,7 @@
 .field select:focus,
 .choice:focus-visible,
 .primary-button:focus-visible {
-  outline: 2px solid #60a5fa;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -175,14 +174,14 @@
 }
 
 .choice:hover {
-  border-color: #97a5b8;
+  border-color: var(--accent-border);
 }
 
 .choice.active {
-  border-color: #111827;
-  background: #111827;
-  color: #f8fafc;
-  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.2);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(62, 192, 153, 0.28);
 }
 
 .toggles {
@@ -230,16 +229,17 @@
   width: 100%;
   min-height: 44px;
   border-radius: 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--accent-border);
   background: #fff;
-  color: #1e293b;
+  color: #1f7f62;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .secondary-button:hover {
-  border-color: #94a3b8;
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .status-note {
@@ -273,7 +273,7 @@
 }
 
 .price-block {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--accent-border);
   border-radius: 16px;
   background: #ffffff;
   padding: 16px;
@@ -301,7 +301,7 @@
 }
 
 .meta-grid > div {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--accent-border);
   border-radius: 12px;
   background: #fff;
   padding: 10px 12px;
@@ -331,7 +331,7 @@
 }
 
 .comparable-item {
-  border: 1px solid #dbe4f0;
+  border: 1px solid var(--accent-border);
   border-radius: 14px;
   background: #fff;
   padding: 12px;
@@ -350,8 +350,8 @@
   min-height: 24px;
   padding: 0 8px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
   font-size: 0.75rem;
   font-weight: 600;
 }
