@@ -16,6 +16,10 @@
 
 #tesla-valuation-widget-container {
   min-height: 100%;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background:
     radial-gradient(circle at 5% -10%, #dbeafe 0%, transparent 42%),
     radial-gradient(circle at 95% 5%, #fee2e2 0%, transparent 32%),
@@ -34,6 +38,7 @@
   margin: 0 auto;
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 
 .widget-header {
@@ -59,6 +64,7 @@
 .journey-layout {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .journey-card {
@@ -67,6 +73,7 @@
   border-radius: 20px;
   padding: 18px;
   box-shadow: var(--shadow);
+  min-width: 0;
 }
 
 .result-card {
@@ -167,8 +174,10 @@
   color: #293447;
   border-radius: 12px;
   min-height: 42px;
+  min-width: 0;
   padding: 9px 10px;
   font-size: 0.86rem;
+  overflow-wrap: anywhere;
   cursor: pointer;
   transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
@@ -340,6 +349,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
