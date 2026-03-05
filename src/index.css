@@ -11,9 +11,22 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
-  box-sizing: border-box;
   min-width: 0;
   width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
   overflow-x: hidden;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y pinch-zoom;
+}
+
+#tesla-valuation-widget-container .widget-shell,
+#tesla-valuation-widget-container .journey-layout,
+#tesla-valuation-widget-container .journey-card,
+#tesla-valuation-widget-container .choice-group,
+#tesla-valuation-widget-container .comparable-item {
+  min-width: 0;
 }
