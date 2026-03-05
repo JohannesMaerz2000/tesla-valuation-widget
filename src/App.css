@@ -107,6 +107,55 @@
   text-transform: uppercase;
 }
 
+.config-progress {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.config-progress li {
+  min-height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--accent-border);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.config-progress li span {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.config-progress li.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.config-progress li.is-active span {
+  color: #1f7f62;
+}
+
+.flow-header {
+  margin-bottom: 14px;
+}
+
+.flow-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.flow-header p {
+  margin: 5px 0 0;
+  color: var(--text-soft);
+  font-size: 0.86rem;
+}
+
 .form-grid {
   display: grid;
   gap: 14px;
@@ -235,6 +284,18 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.step-actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.primary-button.inline,
+.secondary-button.inline {
+  margin-top: 0;
 }
 
 .secondary-button:hover {
@@ -403,6 +464,14 @@
   .two-columns,
   .meta-grid,
   .choice-group {
+    grid-template-columns: 1fr;
+  }
+
+  .config-progress {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .step-actions {
     grid-template-columns: 1fr;
   }
 
