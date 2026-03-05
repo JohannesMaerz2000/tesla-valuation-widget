@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { calculateValuation, calculateDealerInsights, calculateNeighborAverages } from '../src/utils/valuationAlgorithm.js';
+import { calculateValuation } from '../src/utils/valuationAlgorithm.js';
 
 let cachedData = null;
 
@@ -36,17 +36,29 @@ export default async function handler(req, res) {
         }
 
         // Call the valuation algorithm
-        const valuation = calculateValuation(targetCar, cachedData);
+        const rawValuation = calculateValuation(targetCar, cachedData);
+
+        // Strip internal valuation data and penalties from being sent to the frontend
+        const valuation = {
+            estimated_value: rawValuation.estimated_value,
+            confidence_range: rawValuation.confidence_range,
+            target_age_months: rawValuation.target_age_months,
+            cohort_size: rawValuation.cohort_size || rawValuation.cohort_stats?.size || 0,
+            cohort_stats: rawValuation.cohort_stats ? { size: rawValuation.cohort_stats.size } : null,
+            error: rawValuation.error,
+            neighbors: rawValuation.neighbors ? rawValuation.neighbors.map(n => ({
+                auction_id: n.auction_id,
+                weight_percentage: n.weight_percentage,
+                original_price: n.original_price,
+                mileage: n.mileage,
+                age_at_auction_months: n.age_at_auction_months,
+                end_time: n.end_time
+            })) : []
+        };
 
         const response = {
             valuation
         };
-
-        // Include extra insights if valuation succeeded
-        if (valuation.estimated_value) {
-            response.dealerInsights = calculateDealerInsights(valuation);
-            response.neighborAverages = calculateNeighborAverages(valuation);
-        }
 
         res.status(200).json(response);
 
