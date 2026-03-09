@@ -1,49 +1,56 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import '../App.css'
+import {
+  createTranslator,
+  detectInitialLocale,
+  getIntlLocale,
+  resolveLocale,
+  SUPPORTED_LOCALES
+} from '../i18n/index.js'
 
 const MODEL_CHOICES = [
-  { value: 'model_3', label: 'Model 3', model: 'Model 3', isHighland: false },
-  { value: 'model_3_highland', label: 'Model 3 Highland', model: 'Model 3', isHighland: true },
-  { value: 'model_y', label: 'Model Y', model: 'Model Y', isHighland: false }
+  { value: 'model_3', labelKey: 'choices.model.model_3', model: 'Model 3', isHighland: false },
+  { value: 'model_3_highland', labelKey: 'choices.model.model_3_highland', model: 'Model 3', isHighland: true },
+  { value: 'model_y', labelKey: 'choices.model.model_y', model: 'Model Y', isHighland: false }
 ]
 
 const VARIANT_CHOICES = [
-  { value: 'sr', label: 'Standard Range' },
-  { value: 'lr', label: 'Long Range' },
-  { value: 'p', label: 'Performance' }
+  { value: 'sr', labelKey: 'choices.variant.sr' },
+  { value: 'lr', labelKey: 'choices.variant.lr' },
+  { value: 'p', labelKey: 'choices.variant.p' }
 ]
 
 const AUTOPILOT_CHOICES = [
-  { value: 'Standard', label: 'Standard' },
-  { value: 'EAP', label: 'EAP' },
-  { value: 'FSD', label: 'FSD' }
+  { value: 'Standard', labelKey: 'choices.autopilot.Standard' },
+  { value: 'EAP', labelKey: 'choices.autopilot.EAP' },
+  { value: 'FSD', labelKey: 'choices.autopilot.FSD' }
 ]
 
 const TIRE_CHOICES = [
-  { value: '4_summer', label: 'Summer' },
-  { value: '4_winter', label: 'Winter' },
-  { value: '4_all_season', label: 'All-season' },
-  { value: '8_tires', label: '8 tires' }
+  { value: '4_summer', labelKey: 'choices.tire.4_summer' },
+  { value: '4_winter', labelKey: 'choices.tire.4_winter' },
+  { value: '4_all_season', labelKey: 'choices.tire.4_all_season' },
+  { value: '8_tires', labelKey: 'choices.tire.8_tires' }
 ]
 
 const TAX_CHOICES = [
-  { value: 'margin', label: 'Private / Margin' },
-  { value: 'vat', label: 'Company / VAT' }
+  { value: 'margin', labelKey: 'choices.tax.margin' },
+  { value: 'vat', labelKey: 'choices.tax.vat' }
 ]
 
 const MONTH_CHOICES = [
-  { value: '01', label: 'January' },
-  { value: '02', label: 'February' },
-  { value: '03', label: 'March' },
-  { value: '04', label: 'April' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'June' },
-  { value: '07', label: 'July' },
-  { value: '08', label: 'August' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' }
+  { value: '01', labelKey: 'months.01' },
+  { value: '02', labelKey: 'months.02' },
+  { value: '03', labelKey: 'months.03' },
+  { value: '04', labelKey: 'months.04' },
+  { value: '05', labelKey: 'months.05' },
+  { value: '06', labelKey: 'months.06' },
+  { value: '07', labelKey: 'months.07' },
+  { value: '08', labelKey: 'months.08' },
+  { value: '09', labelKey: 'months.09' },
+  { value: '10', labelKey: 'months.10' },
+  { value: '11', labelKey: 'months.11' },
+  { value: '12', labelKey: 'months.12' }
 ]
 
 const DEFAULT_CONFIG = {
@@ -80,42 +87,54 @@ function buildTargetCar(config) {
   }
 }
 
-function formatCurrency(value) {
-  return `€${value.toLocaleString('de-DE')}`
+function formatCurrency(value, intlLocale) {
+  return new Intl.NumberFormat(intlLocale, {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0
+  }).format(value)
 }
 
-function formatDiffMonths(deltaMonths) {
+function formatDiffMonths(deltaMonths, t) {
   if (!deltaMonths) {
-    return 'Same age at sale'
+    return t('result.sameAgeAtSale')
   }
 
   const amount = Math.abs(deltaMonths)
-  const unit = amount === 1 ? 'month' : 'months'
+  const unitKey = amount === 1 ? 'result.monthSingular' : 'result.monthPlural'
+  const unit = t(unitKey)
+
   return deltaMonths > 0
-    ? `${amount} ${unit} older at sale`
-    : `${amount} ${unit} newer at sale`
+    ? t('result.olderAtSale', { amount, unit })
+    : t('result.newerAtSale', { amount, unit })
 }
 
-function formatDiffMileage(deltaKm) {
+function formatDiffMileage(deltaKm, t, intlLocale) {
   if (!deltaKm) {
-    return 'Same mileage at sale'
+    return t('result.sameMileageAtSale')
   }
 
   const rounded = Math.round(Math.abs(deltaKm) / 1000) * 1000
-  if (rounded === 0) return 'Same mileage at sale'
+  if (rounded === 0) return t('result.sameMileageAtSale')
 
-  const amount = rounded.toLocaleString('de-DE')
+  const amount = rounded.toLocaleString(intlLocale)
   return deltaKm > 0
-    ? `${amount} km more at sale`
-    : `${amount} km less at sale`
+    ? t('result.moreMileageAtSale', { amount })
+    : t('result.lessMileageAtSale', { amount })
 }
 
-function formatSaleDate(isoDate) {
-  if (!isoDate) return 'Unknown sale date'
-  return new Date(isoDate).toLocaleDateString('de-DE', { year: 'numeric', month: 'short' })
+function formatSaleDate(isoDate, t, intlLocale) {
+  if (!isoDate) return t('result.unknownSaleDate')
+  return new Date(isoDate).toLocaleDateString(intlLocale, { year: 'numeric', month: 'short' })
 }
 
-function ChoiceGroup({ options, value, onChange }) {
+function getOptionLabel(option, t) {
+  if (option.label) return option.label
+  if (option.labelKey) return t(option.labelKey)
+  return option.value
+}
+
+function ChoiceGroup({ options, value, onChange, t }) {
   return (
     <div className="choice-group" role="group">
       {options.map((option) => (
@@ -125,7 +144,7 @@ function ChoiceGroup({ options, value, onChange }) {
           className={value === option.value ? 'choice active' : 'choice'}
           onClick={() => onChange(option.value)}
         >
-          {option.label}
+          {getOptionLabel(option, t)}
         </button>
       ))}
     </div>
@@ -141,7 +160,9 @@ function Configurator({
   onCalculate,
   isLoading,
   isPrimaryStepComplete,
-  isComplete
+  isComplete,
+  t,
+  intlLocale
 }) {
   const modelSelectionValue = getModelSelectionValue(config)
   const panelRef = useRef(null)
@@ -196,10 +217,10 @@ function Configurator({
   }, [configStep, isLoading, isPrimaryStepComplete, isComplete])
 
   return (
-    <section className="journey-card" aria-label={`Configuration step ${configStep} of 2`}>
+    <section className="journey-card" aria-label={t('step.progress', { step: configStep, total: 2 })}>
       <div className="step-header">
-        <span className="step-index">Step {configStep}</span>
-        <h2>{configStep === 1 ? 'Select Model' : 'Select equipment details'}</h2>
+        <span className="step-index">{t('step.label', { step: configStep })}</span>
+        <h2>{configStep === 1 ? t('step.selectModel') : t('step.selectEquipment')}</h2>
       </div>
 
       <div className="step-progress" aria-hidden="true">
@@ -212,30 +233,30 @@ function Configurator({
           <>
             <div className="form-grid">
               <div className="field">
-                <label>Model</label>
-                <ChoiceGroup options={MODEL_CHOICES.map(({ value, label }) => ({ value, label }))} value={modelSelectionValue} onChange={handleModelSelection} />
+                <label>{t('form.model')}</label>
+                <ChoiceGroup options={MODEL_CHOICES} value={modelSelectionValue} onChange={handleModelSelection} t={t} />
               </div>
 
               <div className="field">
-                <label>Variant</label>
-                <ChoiceGroup options={VARIANT_CHOICES} value={config.variant_tier} onChange={(value) => onChange({ variant_tier: value })} />
+                <label>{t('form.variant')}</label>
+                <ChoiceGroup options={VARIANT_CHOICES} value={config.variant_tier} onChange={(value) => onChange({ variant_tier: value })} t={t} />
               </div>
 
               <div className="field two-columns">
                 <div>
-                  <label>First registration month</label>
+                  <label>{t('form.firstRegistrationMonth')}</label>
                   <select value={config.first_registration_month} onChange={(event) => onChange({ first_registration_month: event.target.value })}>
-                    <option value="">Select month</option>
+                    <option value="">{t('form.selectMonth')}</option>
                     {MONTH_CHOICES.map((month) => (
-                      <option key={month.value} value={month.value}>{month.label}</option>
+                      <option key={month.value} value={month.value}>{t(month.labelKey)}</option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label>First registration year</label>
+                  <label>{t('form.firstRegistrationYear')}</label>
                   <select value={config.first_registration_year} onChange={(event) => onChange({ first_registration_year: event.target.value })}>
-                    <option value="">Select year</option>
+                    <option value="">{t('form.selectYear')}</option>
                     {yearOptions.map((year) => (
                       <option key={year} value={year}>{year}</option>
                     ))}
@@ -244,7 +265,7 @@ function Configurator({
               </div>
 
               <div className="field">
-                <label>Mileage (km)</label>
+                <label>{t('form.mileage')}</label>
                 <input
                   type="number"
                   min="0"
@@ -252,52 +273,54 @@ function Configurator({
                   value={config.mileage}
                   onChange={(event) => onChange({ mileage: event.target.value })}
                 />
-                {config.mileage !== '' ? <p className="field-hint">{Math.round(Number(config.mileage) / 1000)}k km</p> : null}
+                {config.mileage !== '' ? (
+                  <p className="field-hint">{t('form.mileageHint', { value: Math.round(Number(config.mileage) / 1000).toLocaleString(intlLocale) })}</p>
+                ) : null}
               </div>
             </div>
 
             <button type="button" className="primary-button" onClick={onNextStep} disabled={!isPrimaryStepComplete}>
-              Continue
+              {t('form.continue')}
             </button>
           </>
         ) : (
           <>
             <div className="form-grid">
               <div className="field">
-                <label>Tax type</label>
-                <ChoiceGroup options={TAX_CHOICES} value={config.tax_type} onChange={(value) => onChange({ tax_type: value })} />
+                <label>{t('form.taxType')}</label>
+                <ChoiceGroup options={TAX_CHOICES} value={config.tax_type} onChange={(value) => onChange({ tax_type: value })} t={t} />
               </div>
 
               <div className="field">
-                <label>Autopilot</label>
-                <ChoiceGroup options={AUTOPILOT_CHOICES} value={config.autopilot} onChange={(value) => onChange({ autopilot: value })} />
+                <label>{t('form.autopilot')}</label>
+                <ChoiceGroup options={AUTOPILOT_CHOICES} value={config.autopilot} onChange={(value) => onChange({ autopilot: value })} t={t} />
               </div>
 
               <div className="field field-tires">
-                <label>Tires included</label>
-                <ChoiceGroup options={TIRE_CHOICES} value={config.tire_strategy} onChange={(value) => onChange({ tire_strategy: value })} />
+                <label>{t('form.tiresIncluded')}</label>
+                <ChoiceGroup options={TIRE_CHOICES} value={config.tire_strategy} onChange={(value) => onChange({ tire_strategy: value })} t={t} />
               </div>
 
               <div className="field two-columns toggles">
                 <label className="toggle">
                   <input type="checkbox" checked={config.has_heatpump} onChange={(event) => onChange({ has_heatpump: event.target.checked })} />
-                  <span>Heat pump</span>
+                  <span>{t('form.heatPump')}</span>
                 </label>
 
                 <label className="toggle">
                   <input type="checkbox" checked={config.has_hitch} onChange={(event) => onChange({ has_hitch: event.target.checked })} />
-                  <span>Trailer hitch</span>
+                  <span>{t('form.trailerHitch')}</span>
                 </label>
               </div>
             </div>
 
             <div className="button-row">
               <button type="button" className="secondary-button" onClick={onPreviousStep}>
-                Back
+                {t('form.back')}
               </button>
 
               <button type="button" className="primary-button" onClick={onCalculate} disabled={isLoading || !isComplete}>
-                {isLoading ? 'Calculating...' : 'Show estimated price'}
+                {isLoading ? t('form.calculating') : t('form.showEstimatedPrice')}
               </button>
             </div>
           </>
@@ -307,42 +330,42 @@ function Configurator({
   )
 }
 
-function EmptyResultState() {
+function EmptyResultState({ t }) {
   return (
-    <section className="journey-card result-card muted" aria-label="Result placeholder">
+    <section className="journey-card result-card muted" aria-label={t('result.placeholderAria')}>
       <div className="step-header">
-        <span className="step-index">Result</span>
-        <h2>See your estimated value</h2>
+        <span className="step-index">{t('result.label')}</span>
+        <h2>{t('result.placeholderTitle')}</h2>
       </div>
-      <p className="empty-copy">Your result appears here after you finish the configuration and run the valuation.</p>
+      <p className="empty-copy">{t('result.placeholderCopy')}</p>
     </section>
   )
 }
 
-function ErrorResultState({ message, onBack }) {
+function ErrorResultState({ message, onBack, t }) {
   return (
-    <section className="journey-card result-card" aria-label="Valuation error">
+    <section className="journey-card result-card" aria-label={t('result.errorAria')}>
       <div className="step-header">
-        <span className="step-index">Result</span>
-        <h2>Unable to estimate right now</h2>
+        <span className="step-index">{t('result.label')}</span>
+        <h2>{t('result.errorTitle')}</h2>
       </div>
       <p className="error-copy">{message}</p>
-      <p className="status-note">Try a slightly broader setup (variant, age, or tax type) and run again.</p>
+      <p className="status-note">{t('result.statusNote')}</p>
       <button type="button" className="secondary-button" onClick={onBack}>
-        Edit configuration
+        {t('result.editConfiguration')}
       </button>
     </section>
   )
 }
 
-function ComparableList({ valuation, configSnapshot }) {
+function ComparableList({ valuation, configSnapshot, t, intlLocale }) {
   const neighbors = valuation.neighbors || []
 
   if (!neighbors.length) return null
 
   return (
-    <section className="comparables-compact" aria-label="Comparable cars">
-      <h3 className="comparables-heading">Based on closest auction sales</h3>
+    <section className="comparables-compact" aria-label={t('result.comparableCarsAria')}>
+      <h3 className="comparables-heading">{t('result.comparablesHeading')}</h3>
       <div className="comp-table">
         {neighbors.slice(0, 3).map((neighbor, index) => {
           const mileageDelta = neighbor.mileage - configSnapshot.mileage
@@ -350,14 +373,14 @@ function ComparableList({ valuation, configSnapshot }) {
 
           return (
             <div className="comp-row" key={`${neighbor.end_time}-${index}`}>
-              <span className="comp-rank" aria-label={`Comparable ${index + 1}`}>{index + 1}</span>
+              <span className="comp-rank" aria-label={t('result.comparableLabel', { index: index + 1 })}>{index + 1}</span>
               <div className="comp-main">
-                <span className="comp-price">{formatCurrency(neighbor.original_price)}</span>
-                <span className="comp-date">{formatSaleDate(neighbor.end_time)}</span>
+                <span className="comp-price">{formatCurrency(neighbor.original_price, intlLocale)}</span>
+                <span className="comp-date">{formatSaleDate(neighbor.end_time, t, intlLocale)}</span>
               </div>
               <div className="comp-deltas">
-                <span>{formatDiffAge(ageDelta)}</span>
-                <span>{formatDiffMileage(mileageDelta)}</span>
+                <span>{formatDiffAge(ageDelta, t)}</span>
+                <span>{formatDiffMileage(mileageDelta, t, intlLocale)}</span>
               </div>
             </div>
           )
@@ -367,22 +390,22 @@ function ComparableList({ valuation, configSnapshot }) {
   )
 }
 
-function formatDiffAge(deltaMonths) {
-  return formatDiffMonths(deltaMonths)
+function formatDiffAge(deltaMonths, t) {
+  return formatDiffMonths(deltaMonths, t)
 }
 
-function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
+function ResultState({ valuation, configSnapshot, isLoading, onBack, t, intlLocale }) {
   if (isLoading) {
     return (
-      <section className="journey-card result-card" aria-label="Valuation loading state">
+      <section className="journey-card result-card" aria-label={t('result.loadingAria')}>
         <div className="step-header">
-          <span className="step-index">Result</span>
-          <h2>Calculating estimate</h2>
+          <span className="step-index">{t('result.label')}</span>
+          <h2>{t('result.loadingTitle')}</h2>
         </div>
         <div className="loading-shell" aria-live="polite" aria-busy="true">
           <div className="loading-status">
             <span className="loading-spinner" aria-hidden="true" />
-            <p className="loading-copy">Matching your car against recent Tesla auction sales...</p>
+            <p className="loading-copy">{t('result.loadingCopy')}</p>
           </div>
 
           <div className="loading-card" aria-hidden="true">
@@ -393,43 +416,63 @@ function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
         </div>
 
         <button type="button" className="secondary-button" onClick={onBack}>
-          Edit configuration
+          {t('result.editConfiguration')}
         </button>
       </section>
     )
   }
 
   if (!valuation) {
-    return <EmptyResultState />
+    return <EmptyResultState t={t} />
   }
 
   if (valuation.error) {
-    return <ErrorResultState message={valuation.error} onBack={onBack} />
+    return <ErrorResultState message={valuation.error} onBack={onBack} t={t} />
   }
 
   return (
-    <section className="journey-card result-card" aria-label="Valuation result">
+    <section className="journey-card result-card" aria-label={t('result.finalAria')}>
       <div className="step-header">
-        <span className="step-index">Result</span>
-        <h2>Your estimated market price</h2>
+        <span className="step-index">{t('result.label')}</span>
+        <h2>{t('result.finalTitle')}</h2>
       </div>
 
       <div className="price-block-compact">
-        <p className="price-main">{formatCurrency(valuation.estimated_value)}</p>
+        <p className="price-main">{formatCurrency(valuation.estimated_value, intlLocale)}</p>
         <div className="price-sub-row">
           <span className="price-range-inline">
-            {formatCurrency(valuation.confidence_range.min)} – {formatCurrency(valuation.confidence_range.max)}
+            {formatCurrency(valuation.confidence_range.min, intlLocale)} - {formatCurrency(valuation.confidence_range.max, intlLocale)}
           </span>
-          <span className="meta-chip">{valuation.cohort_size} in cohort</span>
+          <span className="meta-chip">{t('result.cohort', { count: valuation.cohort_size.toLocaleString(intlLocale) })}</span>
         </div>
       </div>
 
-      <ComparableList valuation={valuation} configSnapshot={configSnapshot} />
+      <ComparableList valuation={valuation} configSnapshot={configSnapshot} t={t} intlLocale={intlLocale} />
 
       <button type="button" className="secondary-button" onClick={onBack}>
-        Edit configuration
+        {t('result.editConfiguration')}
       </button>
     </section>
+  )
+}
+
+function LocaleSwitcher({ locale, onLocaleChange, t }) {
+  return (
+    <div className="widget-toolbar">
+      <span className="locale-label">{t('language.label')}</span>
+      <div className="locale-switch" role="group" aria-label={t('language.label')}>
+        {SUPPORTED_LOCALES.map((localeCode) => (
+          <button
+            key={localeCode}
+            type="button"
+            className={locale === localeCode ? 'locale-button active' : 'locale-button'}
+            onClick={() => onLocaleChange(localeCode)}
+          >
+            {t(`language.names.${localeCode}`)}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -441,7 +484,11 @@ function DesktopDashboard() {
   const [activeStep, setActiveStep] = useState(1)
   const [configStep, setConfigStep] = useState(1)
   const [layoutLockHeight, setLayoutLockHeight] = useState(null)
+  const [locale, setLocale] = useState(() => detectInitialLocale())
   const journeyLayoutRef = useRef(null)
+
+  const t = useMemo(() => createTranslator(locale), [locale])
+  const intlLocale = useMemo(() => getIntlLocale(locale), [locale])
 
   const isPrimaryStepComplete = useMemo(() => {
     return (
@@ -477,6 +524,16 @@ function DesktopDashboard() {
 
     return () => window.cancelAnimationFrame(unlockFrame)
   }, [isLoading, layoutLockHeight])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      window.localStorage.setItem('tesla-widget-locale', locale)
+    } catch {
+      // Ignore storage write errors in locked-down embed environments.
+    }
+  }, [locale])
 
   const updateConfig = (update) => {
     setConfig((previous) => {
@@ -524,14 +581,20 @@ function DesktopDashboard() {
       setValuation(payload.valuation)
     } catch (error) {
       console.error('Error fetching valuation:', error)
-      setValuation({ error: 'Failed to fetch valuation data. Please try again later.' })
+      setValuation({ error: t('result.fetchError') })
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="widget-shell">
+    <div className="widget-shell" lang={locale}>
+      <LocaleSwitcher
+        locale={locale}
+        onLocaleChange={(nextLocale) => setLocale(resolveLocale(nextLocale))}
+        t={t}
+      />
+
       <main
         ref={journeyLayoutRef}
         className="journey-layout"
@@ -548,6 +611,8 @@ function DesktopDashboard() {
             isLoading={isLoading}
             isPrimaryStepComplete={isPrimaryStepComplete}
             isComplete={isConfigComplete}
+            t={t}
+            intlLocale={intlLocale}
           />
         ) : (
           <ResultState
@@ -555,6 +620,8 @@ function DesktopDashboard() {
             configSnapshot={configSnapshot}
             isLoading={isLoading}
             onBack={() => setActiveStep(1)}
+            t={t}
+            intlLocale={intlLocale}
           />
         )}
       </main>
