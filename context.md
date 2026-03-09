@@ -6,7 +6,11 @@ A React-based web application tailored as an embeddable widget for Webflow. It p
 ## 2. Technical Architecture & Deployment
 - **Tech Stack**: React 19, Vite 7 (configured for single-file assets without hash strings), Pure CSS (no frameworks to avoid conflicts).
 - **State Management**: standard React hooks (`useState`, `useEffect` for async API fetching).
-- **Data Source**: To ensure high performance and minimal latency, the valuation algorithm no longer queries the S3 bucket or raw SQL dynamically on every request. Instead, an `etl.cjs` script runs locally to extract, filter (Tesla models only), and merge the `deal.sql` and `auction.sql` dumps into a highly-optimized, static `tesla_data.json` file (~2.5 MB). 
+- **Data Source**: To ensure high performance and minimal latency, the valuation algorithm no longer queries the S3 bucket or raw SQL dynamically on every request. Instead, an `etl.cjs` script runs locally to extract, filter (Tesla models only), and merge the `deal.sql` and `auction.sql` dumps into a highly-optimized, static `tesla_data.json` file (~2.5 MB).
+  - **Updating the Dataset**: To pull new data from the database and rebuild the dataset, you need to download the latest `.sql` dumps from the S3 bucket to your `/tmp` directory and run the ETL script. Assuming your AWS CLI is authenticated, you can do this all in one command from the project root:
+    ```bash
+    aws s3 cp s3://db-dump-valuation/auction.sql /tmp/auction.sql && aws s3 cp s3://db-dump-valuation/deal.sql /tmp/deal.sql && npm run data:update
+    ``` 
 - **Backend Architecture**: A Vercel serverless function (`api/valuate.js`) loads `tesla_data.json` on the server edge. It receives the target car configuration via POST requests and runs the calculation algorithm on the server, ensuring a 0ms database lookup latency.
 - **Webflow Integration Target**: The app mounts to a specific container (`#tesla-valuation-widget-container`) and acts as a single module injected into the Webflow site. Frontend and Serverless APIs are hosted together on Vercel.
 

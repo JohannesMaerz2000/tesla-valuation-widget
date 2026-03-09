@@ -188,8 +188,8 @@ const MESSAGES = {
         '8_tires': '8 Reifen'
       },
       tax: {
-        margin: 'Privat / Differenzbesteuerung',
-        vat: 'Firma / MwSt.'
+        margin: 'Privatverkauf',
+        vat: 'Firmenfahrzeug'
       }
     },
     months: {
