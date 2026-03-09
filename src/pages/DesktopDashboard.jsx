@@ -338,25 +338,25 @@ function ComparableList({ valuation, configSnapshot }) {
   if (!neighbors.length) return null
 
   return (
-    <section className="comparables" aria-label="Comparable cars">
-      <h3>Closest comparable sales</h3>
-      <div className="comparable-list">
+    <section className="comparables-compact" aria-label="Comparable cars">
+      <h3 className="comparables-heading">Based on closest auction sales</h3>
+      <div className="comp-table">
         {neighbors.slice(0, 3).map((neighbor, index) => {
           const mileageDelta = neighbor.mileage - configSnapshot.mileage
           const ageDelta = neighbor.age_at_auction_months - valuation.target_age_months
 
           return (
-            <article className="comparable-item" key={`${neighbor.end_time}-${index}`}>
-              <div className="comparable-head">
-                <span className="badge">Comparable {index + 1}</span>
-                <span className="sale-date">Sold {formatSaleDate(neighbor.end_time)}</span>
+            <div className="comp-row" key={`${neighbor.end_time}-${index}`}>
+              <span className="comp-rank" aria-label={`Comparable ${index + 1}`}>{index + 1}</span>
+              <div className="comp-main">
+                <span className="comp-price">{formatCurrency(neighbor.original_price)}</span>
+                <span className="comp-date">{formatSaleDate(neighbor.end_time)}</span>
               </div>
-              <p className="sale-price">{formatCurrency(neighbor.original_price)}</p>
-              <ul className="delta-list">
-                <li>{formatDiffAge(ageDelta)}</li>
-                <li>{formatDiffMileage(mileageDelta)}</li>
-              </ul>
-            </article>
+              <div className="comp-deltas">
+                <span>{formatDiffAge(ageDelta)}</span>
+                <span>{formatDiffMileage(mileageDelta)}</span>
+              </div>
+            </div>
           )
         })}
       </div>
@@ -411,21 +411,14 @@ function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
         <h2>Your estimated market price</h2>
       </div>
 
-      <div className="price-block">
+      <div className="price-block-compact">
         <p className="price-main">{formatCurrency(valuation.estimated_value)}</p>
-        <p className="price-range">
-          Range {formatCurrency(valuation.confidence_range.min)} to {formatCurrency(valuation.confidence_range.max)}
-        </p>
-      </div>
-
-      <div className="meta-grid">
-        <div>
-          <span className="meta-label">Comparables used</span>
-          <span className="meta-value">{valuation.neighbors.length}</span>
-        </div>
-        <div>
-          <span className="meta-label">Matching cohort</span>
-          <span className="meta-value">{valuation.cohort_size}</span>
+        <div className="price-sub-row">
+          <span className="price-range-inline">
+            {formatCurrency(valuation.confidence_range.min)} – {formatCurrency(valuation.confidence_range.max)}
+          </span>
+          <span className="meta-chip">{valuation.neighbors.length} comparables</span>
+          <span className="meta-chip">{valuation.cohort_size} in cohort</span>
         </div>
       </div>
 
