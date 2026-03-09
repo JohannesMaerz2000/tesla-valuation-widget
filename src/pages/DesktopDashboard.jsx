@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import '../App.css'
 import {
   createTranslator,
@@ -151,6 +151,212 @@ function ChoiceGroup({ options, value, onChange, t }) {
   )
 }
 
+function CustomSelect({ value, options, placeholder, onChange, t, labelledBy }) {
+  const rootRef = useRef(null)
+  const buttonRef = useRef(null)
+  const optionRefs = useRef([])
+  const buttonId = useId()
+  const listboxId = useId()
+  const [isOpen, setIsOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
+
+  const selectedIndex = options.findIndex((option) => option.value === value)
+  const selectedOption = selectedIndex >= 0 ? options[selectedIndex] : null
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    const handlePointerDown = (event) => {
+      if (!rootRef.current?.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || activeIndex < 0) return undefined
+
+    const frame = window.requestAnimationFrame(() => {
+      optionRefs.current[activeIndex]?.focus()
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [activeIndex, isOpen])
+
+  const getInitialIndex = () => {
+    if (!options.length) return -1
+    return selectedIndex >= 0 ? selectedIndex : 0
+  }
+
+  const openDropdown = (indexOverride) => {
+    const nextIndex = typeof indexOverride === 'number' ? indexOverride : getInitialIndex()
+    setActiveIndex(nextIndex)
+    setIsOpen(true)
+  }
+
+  const closeDropdown = () => {
+    setIsOpen(false)
+    window.requestAnimationFrame(() => {
+      buttonRef.current?.focus()
+    })
+  }
+
+  const moveActiveOption = (direction) => {
+    if (!options.length) return
+    const fallbackIndex = selectedIndex >= 0 ? selectedIndex : 0
+    const startIndex = activeIndex >= 0 ? activeIndex : fallbackIndex
+    const nextIndex = Math.max(0, Math.min(options.length - 1, startIndex + direction))
+    setActiveIndex(nextIndex)
+    optionRefs.current[nextIndex]?.focus()
+  }
+
+  const selectIndex = (index) => {
+    const nextOption = options[index]
+    if (!nextOption) return
+
+    onChange(nextOption.value)
+    setActiveIndex(index)
+    closeDropdown()
+  }
+
+  return (
+    <div ref={rootRef} className={isOpen ? 'custom-select open' : 'custom-select'}>
+      <button
+        id={buttonId}
+        ref={buttonRef}
+        type="button"
+        className={selectedOption ? 'custom-select-trigger' : 'custom-select-trigger placeholder'}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={listboxId}
+        aria-labelledby={`${labelledBy} ${buttonId}`}
+        onClick={() => {
+          if (isOpen) {
+            setIsOpen(false)
+          } else {
+            openDropdown()
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown') {
+            event.preventDefault()
+            if (!isOpen) {
+              openDropdown()
+            } else {
+              moveActiveOption(1)
+            }
+            return
+          }
+
+          if (event.key === 'ArrowUp') {
+            event.preventDefault()
+            if (!isOpen) {
+              openDropdown(options.length - 1)
+            } else {
+              moveActiveOption(-1)
+            }
+            return
+          }
+
+          if ((event.key === 'Enter' || event.key === ' ') && !isOpen) {
+            event.preventDefault()
+            openDropdown()
+            return
+          }
+
+          if (event.key === 'Escape' && isOpen) {
+            event.preventDefault()
+            closeDropdown()
+          }
+        }}
+      >
+        <span>{selectedOption ? getOptionLabel(selectedOption, t) : placeholder}</span>
+        <span className={isOpen ? 'custom-select-caret open' : 'custom-select-caret'} aria-hidden="true">▾</span>
+      </button>
+
+      {isOpen ? (
+        <div
+          id={listboxId}
+          className="custom-select-menu"
+          role="listbox"
+          aria-labelledby={labelledBy}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowDown') {
+              event.preventDefault()
+              moveActiveOption(1)
+              return
+            }
+
+            if (event.key === 'ArrowUp') {
+              event.preventDefault()
+              moveActiveOption(-1)
+              return
+            }
+
+            if (event.key === 'Home') {
+              event.preventDefault()
+              setActiveIndex(0)
+              optionRefs.current[0]?.focus()
+              return
+            }
+
+            if (event.key === 'End') {
+              event.preventDefault()
+              const lastIndex = options.length - 1
+              setActiveIndex(lastIndex)
+              optionRefs.current[lastIndex]?.focus()
+              return
+            }
+
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault()
+              if (activeIndex >= 0) {
+                selectIndex(activeIndex)
+              }
+              return
+            }
+
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              closeDropdown()
+              return
+            }
+
+            if (event.key === 'Tab') {
+              setIsOpen(false)
+            }
+          }}
+        >
+          {options.map((option, index) => {
+            const isSelected = option.value === value
+            const isActive = index === activeIndex
+
+            return (
+              <button
+                type="button"
+                key={option.value}
+                ref={(element) => {
+                  optionRefs.current[index] = element
+                }}
+                role="option"
+                aria-selected={isSelected}
+                className={isSelected ? 'custom-select-option selected' : isActive ? 'custom-select-option active' : 'custom-select-option'}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => selectIndex(index)}
+              >
+                {getOptionLabel(option, t)}
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function Configurator({
   config,
   configStep,
@@ -168,13 +374,15 @@ function Configurator({
   const panelRef = useRef(null)
   const maxPanelHeightRef = useRef(0)
   const [stablePanelHeight, setStablePanelHeight] = useState(null)
+  const monthLabelId = useId()
+  const yearLabelId = useId()
 
   const currentYear = new Date().getFullYear()
   const minYear = config.is_highland ? 2023 : 2019
   const yearOptions = useMemo(() => {
     const years = []
     for (let year = currentYear; year >= minYear; year -= 1) {
-      years.push(String(year))
+      years.push({ value: String(year), label: String(year) })
     }
     return years
   }, [currentYear, minYear])
@@ -244,23 +452,27 @@ function Configurator({
 
               <div className="field two-columns">
                 <div>
-                  <label>{t('form.firstRegistrationMonth')}</label>
-                  <select value={config.first_registration_month} onChange={(event) => onChange({ first_registration_month: event.target.value })}>
-                    <option value="">{t('form.selectMonth')}</option>
-                    {MONTH_CHOICES.map((month) => (
-                      <option key={month.value} value={month.value}>{t(month.labelKey)}</option>
-                    ))}
-                  </select>
+                  <label id={monthLabelId}>{t('form.firstRegistrationMonth')}</label>
+                  <CustomSelect
+                    value={config.first_registration_month}
+                    options={MONTH_CHOICES}
+                    placeholder={t('form.selectMonth')}
+                    onChange={(value) => onChange({ first_registration_month: value })}
+                    t={t}
+                    labelledBy={monthLabelId}
+                  />
                 </div>
 
                 <div>
-                  <label>{t('form.firstRegistrationYear')}</label>
-                  <select value={config.first_registration_year} onChange={(event) => onChange({ first_registration_year: event.target.value })}>
-                    <option value="">{t('form.selectYear')}</option>
-                    {yearOptions.map((year) => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
+                  <label id={yearLabelId}>{t('form.firstRegistrationYear')}</label>
+                  <CustomSelect
+                    value={config.first_registration_year}
+                    options={yearOptions}
+                    placeholder={t('form.selectYear')}
+                    onChange={(value) => onChange({ first_registration_year: value })}
+                    t={t}
+                    labelledBy={yearLabelId}
+                  />
                 </div>
               </div>
 
