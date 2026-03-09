@@ -101,7 +101,10 @@ function formatDiffMileage(deltaKm) {
     return 'Same mileage at sale'
   }
 
-  const amount = Math.abs(deltaKm).toLocaleString('de-DE')
+  const rounded = Math.round(Math.abs(deltaKm) / 1000) * 1000
+  if (rounded === 0) return 'Same mileage at sale'
+
+  const amount = rounded.toLocaleString('de-DE')
   return deltaKm > 0
     ? `${amount} km more at sale`
     : `${amount} km less at sale`
@@ -417,7 +420,6 @@ function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
           <span className="price-range-inline">
             {formatCurrency(valuation.confidence_range.min)} – {formatCurrency(valuation.confidence_range.max)}
           </span>
-          <span className="meta-chip">{valuation.neighbors.length} comparables</span>
           <span className="meta-chip">{valuation.cohort_size} in cohort</span>
         </div>
       </div>
