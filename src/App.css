@@ -107,9 +107,31 @@
   text-transform: uppercase;
 }
 
+.step-progress {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.progress-dot {
+  width: 28px;
+  height: 6px;
+  border-radius: 999px;
+  background: #d7ebe4;
+}
+
+.progress-dot.active {
+  background: var(--accent);
+}
+
 .form-grid {
   display: grid;
   gap: 14px;
+}
+
+.config-panel {
+  display: grid;
+  align-content: start;
 }
 
 .field {
@@ -240,6 +262,18 @@
 .secondary-button:hover {
   border-color: var(--accent);
   background: var(--accent-soft);
+}
+
+.button-row {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.button-row .secondary-button,
+.button-row .primary-button {
+  margin-top: 0;
 }
 
 .status-note {
@@ -474,6 +508,14 @@
   .meta-grid,
   .choice-group {
     grid-template-columns: 1fr;
+  }
+
+  .button-row {
+    grid-template-columns: 1fr;
+  }
+
+  .field-tires .choice-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .step-header {

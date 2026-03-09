@@ -129,8 +129,21 @@ function ChoiceGroup({ options, value, onChange }) {
   )
 }
 
-function Configurator({ config, onChange, onCalculate, isLoading, isComplete }) {
+function Configurator({
+  config,
+  configStep,
+  onNextStep,
+  onPreviousStep,
+  onChange,
+  onCalculate,
+  isLoading,
+  isPrimaryStepComplete,
+  isComplete
+}) {
   const modelSelectionValue = getModelSelectionValue(config)
+  const panelRef = useRef(null)
+  const maxPanelHeightRef = useRef(0)
+  const [stablePanelHeight, setStablePanelHeight] = useState(null)
 
   const currentYear = new Date().getFullYear()
   const minYear = config.is_highland ? 2023 : 2019
@@ -162,98 +175,140 @@ function Configurator({ config, onChange, onCalculate, isLoading, isComplete }) 
     })
   }
 
+  useEffect(() => {
+    const panelElement = panelRef.current
+    if (!panelElement || typeof ResizeObserver === 'undefined') return undefined
+
+    const observer = new ResizeObserver((entries) => {
+      const nextHeight = Math.ceil(entries[0]?.contentRect?.height ?? 0)
+      if (!nextHeight || nextHeight <= maxPanelHeightRef.current) return
+
+      maxPanelHeightRef.current = nextHeight
+      setStablePanelHeight(nextHeight)
+    })
+
+    observer.observe(panelElement)
+
+    return () => observer.disconnect()
+  }, [configStep, isLoading, isPrimaryStepComplete, isComplete])
+
   return (
-    <section className="journey-card" aria-label="Step 1 Configure your car">
+    <section className="journey-card" aria-label={`Configuration step ${configStep} of 2`}>
       <div className="step-header">
-        <span className="step-index">Step 1</span>
-        <h2>Configure your Tesla</h2>
+        <span className="step-index">Step {configStep}</span>
+        <h2>{configStep === 1 ? 'Select Model' : 'Select equipment details'}</h2>
       </div>
 
-      <div className="form-grid">
-        <div className="field">
-          <label>Model</label>
-          <ChoiceGroup options={MODEL_CHOICES.map(({ value, label }) => ({ value, label }))} value={modelSelectionValue} onChange={handleModelSelection} />
-        </div>
-
-        <div className="field">
-          <label>Variant</label>
-          <ChoiceGroup options={VARIANT_CHOICES} value={config.variant_tier} onChange={(value) => onChange({ variant_tier: value })} />
-        </div>
-
-        <div className="field two-columns">
-          <div>
-            <label>First registration month</label>
-            <select value={config.first_registration_month} onChange={(event) => onChange({ first_registration_month: event.target.value })}>
-              <option value="">Select month</option>
-              {MONTH_CHOICES.map((month) => (
-                <option key={month.value} value={month.value}>{month.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label>First registration year</label>
-            <select value={config.first_registration_year} onChange={(event) => onChange({ first_registration_year: event.target.value })}>
-              <option value="">Select year</option>
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="field">
-          <label>Mileage (km)</label>
-          <input
-            type="number"
-            min="0"
-            step="1000"
-            value={config.mileage}
-            onChange={(event) => onChange({ mileage: event.target.value })}
-          />
-          {config.mileage !== '' ? <p className="field-hint">{Math.round(Number(config.mileage) / 1000)}k km</p> : null}
-        </div>
-
-        <div className="field">
-          <label>Tax type</label>
-          <ChoiceGroup options={TAX_CHOICES} value={config.tax_type} onChange={(value) => onChange({ tax_type: value })} />
-        </div>
-
-        <div className="field">
-          <label>Autopilot</label>
-          <ChoiceGroup options={AUTOPILOT_CHOICES} value={config.autopilot} onChange={(value) => onChange({ autopilot: value })} />
-        </div>
-
-        <div className="field">
-          <label>Tires included</label>
-          <ChoiceGroup options={TIRE_CHOICES} value={config.tire_strategy} onChange={(value) => onChange({ tire_strategy: value })} />
-        </div>
-
-        <div className="field two-columns toggles">
-          <label className="toggle">
-            <input type="checkbox" checked={config.has_heatpump} onChange={(event) => onChange({ has_heatpump: event.target.checked })} />
-            <span>Heat pump</span>
-          </label>
-
-          <label className="toggle">
-            <input type="checkbox" checked={config.has_hitch} onChange={(event) => onChange({ has_hitch: event.target.checked })} />
-            <span>Trailer hitch</span>
-          </label>
-        </div>
+      <div className="step-progress" aria-hidden="true">
+        <span className={configStep === 1 ? 'progress-dot active' : 'progress-dot'} />
+        <span className={configStep === 2 ? 'progress-dot active' : 'progress-dot'} />
       </div>
 
-      <button type="button" className="primary-button" onClick={onCalculate} disabled={isLoading || !isComplete}>
-        {isLoading ? 'Calculating...' : 'Show estimated price'}
-      </button>
+      <div ref={panelRef} className="config-panel" style={stablePanelHeight ? { minHeight: `${stablePanelHeight}px` } : undefined}>
+        {configStep === 1 ? (
+          <>
+            <div className="form-grid">
+              <div className="field">
+                <label>Model</label>
+                <ChoiceGroup options={MODEL_CHOICES.map(({ value, label }) => ({ value, label }))} value={modelSelectionValue} onChange={handleModelSelection} />
+              </div>
+
+              <div className="field">
+                <label>Variant</label>
+                <ChoiceGroup options={VARIANT_CHOICES} value={config.variant_tier} onChange={(value) => onChange({ variant_tier: value })} />
+              </div>
+
+              <div className="field two-columns">
+                <div>
+                  <label>First registration month</label>
+                  <select value={config.first_registration_month} onChange={(event) => onChange({ first_registration_month: event.target.value })}>
+                    <option value="">Select month</option>
+                    {MONTH_CHOICES.map((month) => (
+                      <option key={month.value} value={month.value}>{month.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label>First registration year</label>
+                  <select value={config.first_registration_year} onChange={(event) => onChange({ first_registration_year: event.target.value })}>
+                    <option value="">Select year</option>
+                    {yearOptions.map((year) => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="field">
+                <label>Mileage (km)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  value={config.mileage}
+                  onChange={(event) => onChange({ mileage: event.target.value })}
+                />
+                {config.mileage !== '' ? <p className="field-hint">{Math.round(Number(config.mileage) / 1000)}k km</p> : null}
+              </div>
+            </div>
+
+            <button type="button" className="primary-button" onClick={onNextStep} disabled={!isPrimaryStepComplete}>
+              Continue
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="form-grid">
+              <div className="field">
+                <label>Tax type</label>
+                <ChoiceGroup options={TAX_CHOICES} value={config.tax_type} onChange={(value) => onChange({ tax_type: value })} />
+              </div>
+
+              <div className="field">
+                <label>Autopilot</label>
+                <ChoiceGroup options={AUTOPILOT_CHOICES} value={config.autopilot} onChange={(value) => onChange({ autopilot: value })} />
+              </div>
+
+              <div className="field field-tires">
+                <label>Tires included</label>
+                <ChoiceGroup options={TIRE_CHOICES} value={config.tire_strategy} onChange={(value) => onChange({ tire_strategy: value })} />
+              </div>
+
+              <div className="field two-columns toggles">
+                <label className="toggle">
+                  <input type="checkbox" checked={config.has_heatpump} onChange={(event) => onChange({ has_heatpump: event.target.checked })} />
+                  <span>Heat pump</span>
+                </label>
+
+                <label className="toggle">
+                  <input type="checkbox" checked={config.has_hitch} onChange={(event) => onChange({ has_hitch: event.target.checked })} />
+                  <span>Trailer hitch</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="button-row">
+              <button type="button" className="secondary-button" onClick={onPreviousStep}>
+                Back
+              </button>
+
+              <button type="button" className="primary-button" onClick={onCalculate} disabled={isLoading || !isComplete}>
+                {isLoading ? 'Calculating...' : 'Show estimated price'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </section>
   )
 }
 
 function EmptyResultState() {
   return (
-    <section className="journey-card result-card muted" aria-label="Step 2 See your estimated value">
+    <section className="journey-card result-card muted" aria-label="Result placeholder">
       <div className="step-header">
-        <span className="step-index">Step 2</span>
+        <span className="step-index">Result</span>
         <h2>See your estimated value</h2>
       </div>
       <p className="empty-copy">Your result appears here after you finish the configuration and run the valuation.</p>
@@ -265,7 +320,7 @@ function ErrorResultState({ message, onBack }) {
   return (
     <section className="journey-card result-card" aria-label="Valuation error">
       <div className="step-header">
-        <span className="step-index">Step 2</span>
+        <span className="step-index">Result</span>
         <h2>Unable to estimate right now</h2>
       </div>
       <p className="error-copy">{message}</p>
@@ -318,7 +373,7 @@ function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
     return (
       <section className="journey-card result-card" aria-label="Valuation loading state">
         <div className="step-header">
-          <span className="step-index">Step 2</span>
+          <span className="step-index">Result</span>
           <h2>Calculating estimate</h2>
         </div>
         <div className="loading-shell" aria-live="polite" aria-busy="true">
@@ -352,7 +407,7 @@ function ResultState({ valuation, configSnapshot, isLoading, onBack }) {
   return (
     <section className="journey-card result-card" aria-label="Valuation result">
       <div className="step-header">
-        <span className="step-index">Step 2</span>
+        <span className="step-index">Result</span>
         <h2>Your estimated market price</h2>
       </div>
 
@@ -389,8 +444,20 @@ function DesktopDashboard() {
   const [valuation, setValuation] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [activeStep, setActiveStep] = useState(1)
+  const [configStep, setConfigStep] = useState(1)
   const [layoutLockHeight, setLayoutLockHeight] = useState(null)
   const journeyLayoutRef = useRef(null)
+
+  const isPrimaryStepComplete = useMemo(() => {
+    return (
+      !!config.model &&
+      !!config.variant_tier &&
+      config.first_registration_month !== '' &&
+      config.first_registration_year !== '' &&
+      config.mileage !== '' &&
+      Number(config.mileage) >= 0
+    )
+  }, [config])
 
   const isConfigComplete = useMemo(() => {
     return (
@@ -470,11 +537,6 @@ function DesktopDashboard() {
 
   return (
     <div className="widget-shell">
-      <header className="widget-header">
-        <h1>Tesla Valuation</h1>
-        <p>Configure your car and reveal an instant market estimate from real B2B auction data.</p>
-      </header>
-
       <main
         ref={journeyLayoutRef}
         className="journey-layout"
@@ -483,9 +545,13 @@ function DesktopDashboard() {
         {activeStep === 1 ? (
           <Configurator
             config={config}
+            configStep={configStep}
+            onNextStep={() => setConfigStep(2)}
+            onPreviousStep={() => setConfigStep(1)}
             onChange={updateConfig}
             onCalculate={calculateValuation}
             isLoading={isLoading}
+            isPrimaryStepComplete={isPrimaryStepComplete}
             isComplete={isConfigComplete}
           />
         ) : (
