@@ -67,10 +67,27 @@ const DEFAULT_CONFIG = {
   first_registration_month: ''
 }
 
+const MAX_MILEAGE_KM = 160000
+const MIN_REGISTRATION_YEAR = 2019
+const MODEL_3_PRE_HIGHLAND_MAX_YEAR = 2024
+const MODEL_3_HIGHLAND_MIN_YEAR = 2023
+
 function getModelSelectionValue(config) {
   if (!config.model) return null
   if (config.model === 'Model Y') return 'model_y'
   return config.is_highland ? 'model_3_highland' : 'model_3'
+}
+
+function getRegistrationYearBounds(config, currentYear) {
+  if (config.model === 'Model 3' && config.is_highland === true) {
+    return { minYear: MODEL_3_HIGHLAND_MIN_YEAR, maxYear: currentYear }
+  }
+
+  if (config.model === 'Model 3' && config.is_highland === false) {
+    return { minYear: MIN_REGISTRATION_YEAR, maxYear: Math.min(currentYear, MODEL_3_PRE_HIGHLAND_MAX_YEAR) }
+  }
+
+  return { minYear: MIN_REGISTRATION_YEAR, maxYear: currentYear }
 }
 
 function buildTargetCar(config) {
@@ -374,18 +391,19 @@ function Configurator({
   const panelRef = useRef(null)
   const maxPanelHeightRef = useRef(0)
   const [stablePanelHeight, setStablePanelHeight] = useState(null)
+  const [showMileageLimitHint, setShowMileageLimitHint] = useState(false)
   const monthLabelId = useId()
   const yearLabelId = useId()
 
   const currentYear = new Date().getFullYear()
-  const minYear = config.is_highland ? 2023 : 2019
+  const { minYear, maxYear } = getRegistrationYearBounds(config, currentYear)
   const yearOptions = useMemo(() => {
     const years = []
-    for (let year = currentYear; year >= minYear; year -= 1) {
+    for (let year = maxYear; year >= minYear; year -= 1) {
       years.push({ value: String(year), label: String(year) })
     }
     return years
-  }, [currentYear, minYear])
+  }, [maxYear, minYear])
 
   const handleModelSelection = (nextValue) => {
     const nextModel = MODEL_CHOICES.find((entry) => entry.value === nextValue)
@@ -398,13 +416,40 @@ function Configurator({
         is_highland: nextModel.isHighland
       }
 
-      if (nextModel.isHighland && prev.first_registration_year && Number(prev.first_registration_year) < 2023) {
-        next.first_registration_year = ''
-        next.first_registration_month = ''
+      const nextBounds = getRegistrationYearBounds(next, currentYear)
+      if (prev.first_registration_year) {
+        const selectedYear = Number(prev.first_registration_year)
+        const isYearOutOfRange = selectedYear < nextBounds.minYear || selectedYear > nextBounds.maxYear
+        if (isYearOutOfRange) {
+          next.first_registration_year = ''
+          next.first_registration_month = ''
+        }
       }
 
       return next
     })
+  }
+
+  const handleMileageChange = (event) => {
+    const nextMileage = event.target.value
+
+    if (nextMileage === '') {
+      setShowMileageLimitHint(false)
+      onChange({ mileage: '' })
+      return
+    }
+
+    const parsedMileage = Number(nextMileage)
+    if (Number.isNaN(parsedMileage) || parsedMileage < 0) return
+
+    if (parsedMileage > MAX_MILEAGE_KM) {
+      setShowMileageLimitHint(true)
+      onChange({ mileage: String(MAX_MILEAGE_KM) })
+      return
+    }
+
+    setShowMileageLimitHint(false)
+    onChange({ mileage: nextMileage })
   }
 
   useEffect(() => {
@@ -481,12 +526,18 @@ function Configurator({
                 <input
                   type="number"
                   min="0"
+                  max={MAX_MILEAGE_KM}
                   step="1000"
                   value={config.mileage}
-                  onChange={(event) => onChange({ mileage: event.target.value })}
+                  onChange={handleMileageChange}
                 />
                 {config.mileage !== '' ? (
                   <p className="field-hint">{t('form.mileageHint', { value: Math.round(Number(config.mileage) / 1000).toLocaleString(intlLocale) })}</p>
+                ) : null}
+                {showMileageLimitHint ? (
+                  <p className="field-hint field-hint-warning">
+                    {t('form.mileageMaxHint', { max: MAX_MILEAGE_KM.toLocaleString(intlLocale) })}
+                  </p>
                 ) : null}
               </div>
             </div>
@@ -703,17 +754,20 @@ function DesktopDashboard() {
   const intlLocale = useMemo(() => getIntlLocale(locale), [locale])
 
   const isPrimaryStepComplete = useMemo(() => {
+    const mileage = Number(config.mileage)
     return (
       !!config.model &&
       !!config.variant_tier &&
       config.first_registration_month !== '' &&
       config.first_registration_year !== '' &&
       config.mileage !== '' &&
-      Number(config.mileage) >= 0
+      mileage >= 0 &&
+      mileage <= MAX_MILEAGE_KM
     )
   }, [config])
 
   const isConfigComplete = useMemo(() => {
+    const mileage = Number(config.mileage)
     return (
       !!config.model &&
       !!config.variant_tier &&
@@ -723,7 +777,8 @@ function DesktopDashboard() {
       config.first_registration_month !== '' &&
       config.first_registration_year !== '' &&
       config.mileage !== '' &&
-      Number(config.mileage) >= 0
+      mileage >= 0 &&
+      mileage <= MAX_MILEAGE_KM
     )
   }, [config])
 

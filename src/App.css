@@ -288,6 +288,10 @@
   color: var(--text-soft);
 }
 
+.field-hint-warning {
+  color: var(--warning-text);
+}
+
 .two-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;

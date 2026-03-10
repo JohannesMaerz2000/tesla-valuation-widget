@@ -30,7 +30,8 @@ const MESSAGES = {
       back: 'Back',
       calculating: 'Calculating...',
       showEstimatedPrice: 'Show estimated price',
-      mileageHint: '{value}k km'
+      mileageHint: '{value}k km',
+      mileageMaxHint: 'We currently support up to {max} km.'
     },
     result: {
       label: 'Result',
@@ -134,7 +135,8 @@ const MESSAGES = {
       back: 'Zurück',
       calculating: 'Berechnung...',
       showEstimatedPrice: 'Schätzpreis anzeigen',
-      mileageHint: '{value}k km'
+      mileageHint: '{value}k km',
+      mileageMaxHint: 'Aktuell unterstützen wir bis zu {max} km.'
     },
     result: {
       label: 'Ergebnis',
@@ -271,6 +273,10 @@ export function detectInitialLocale() {
     storedLocale = window.localStorage.getItem('tesla-widget-locale')
   } catch {
     storedLocale = null
+  }
+
+  if (import.meta.env.PROD) {
+    return resolveLocale(queryLocale || storedLocale || DEFAULT_LOCALE)
   }
 
   const documentLocale = document.documentElement.lang
