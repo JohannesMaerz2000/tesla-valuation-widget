@@ -206,6 +206,25 @@
   outline-offset: 2px;
 }
 
+.input-with-trailing {
+  position: relative;
+}
+
+.input-with-trailing input {
+  padding-right: 44px;
+}
+
+.input-trailing {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  font-weight: 600;
+  pointer-events: none;
+}
+
 .custom-select {
   position: relative;
 }
@@ -347,6 +366,7 @@
   width: 17px;
   height: 17px;
   margin: 0;
+  accent-color: var(--accent);
 }
 
 .primary-button {
@@ -549,6 +569,12 @@
   color: var(--text-soft);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.comparables-subheading {
+  margin: -2px 0 8px;
+  font-size: 0.78rem;
+  color: var(--text-soft);
 }
 
 .comp-table {

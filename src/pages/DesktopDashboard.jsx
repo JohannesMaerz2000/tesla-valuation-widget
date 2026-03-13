@@ -140,9 +140,17 @@ function formatDiffMileage(deltaKm, t, intlLocale) {
     : t('result.lessMileageAtSale', { amount })
 }
 
+function formatMileageInput(value, intlLocale) {
+  if (value === '' || value == null) return ''
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) return ''
+  return numeric.toLocaleString(intlLocale)
+}
+
 function formatSaleDate(isoDate, t, intlLocale) {
   if (!isoDate) return t('result.unknownSaleDate')
-  return new Date(isoDate).toLocaleDateString(intlLocale, { year: 'numeric', month: 'short' })
+  const formattedDate = new Date(isoDate).toLocaleDateString(intlLocale, { year: 'numeric', month: 'short' })
+  return `${t('result.soldOn')} ${formattedDate}`
 }
 
 function getOptionLabel(option, t) {
@@ -432,14 +440,15 @@ function Configurator({
 
   const handleMileageChange = (event) => {
     const nextMileage = event.target.value
+    const normalizedMileage = nextMileage.replace(/\D/g, '')
 
-    if (nextMileage === '') {
+    if (normalizedMileage === '') {
       setShowMileageLimitHint(false)
       onChange({ mileage: '' })
       return
     }
 
-    const parsedMileage = Number(nextMileage)
+    const parsedMileage = Number(normalizedMileage)
     if (Number.isNaN(parsedMileage) || parsedMileage < 0) return
 
     if (parsedMileage > MAX_MILEAGE_KM) {
@@ -449,7 +458,7 @@ function Configurator({
     }
 
     setShowMileageLimitHint(false)
-    onChange({ mileage: nextMileage })
+    onChange({ mileage: String(parsedMileage) })
   }
 
   useEffect(() => {
@@ -523,17 +532,15 @@ function Configurator({
 
               <div className="field">
                 <label>{t('form.mileage')}</label>
-                <input
-                  type="number"
-                  min="0"
-                  max={MAX_MILEAGE_KM}
-                  step="1000"
-                  value={config.mileage}
-                  onChange={handleMileageChange}
-                />
-                {config.mileage !== '' ? (
-                  <p className="field-hint">{t('form.mileageHint', { value: Math.round(Number(config.mileage) / 1000).toLocaleString(intlLocale) })}</p>
-                ) : null}
+                <div className="input-with-trailing">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formatMileageInput(config.mileage, intlLocale)}
+                    onChange={handleMileageChange}
+                  />
+                  <span className="input-trailing">km</span>
+                </div>
                 {showMileageLimitHint ? (
                   <p className="field-hint field-hint-warning">
                     {t('form.mileageMaxHint', { max: MAX_MILEAGE_KM.toLocaleString(intlLocale) })}
@@ -629,6 +636,7 @@ function ComparableList({ valuation, configSnapshot, t, intlLocale }) {
   return (
     <section className="comparables-compact" aria-label={t('result.comparableCarsAria')}>
       <h3 className="comparables-heading">{t('result.comparablesHeading')}</h3>
+      <p className="comparables-subheading">{t('result.comparablesSubheading')}</p>
       <div className="comp-table">
         {neighbors.slice(0, 3).map((neighbor, index) => {
           const mileageDelta = neighbor.mileage - configSnapshot.mileage
@@ -642,8 +650,7 @@ function ComparableList({ valuation, configSnapshot, t, intlLocale }) {
                 <span className="comp-date">{formatSaleDate(neighbor.end_time, t, intlLocale)}</span>
               </div>
               <div className="comp-deltas">
-                <span>{formatDiffAge(ageDelta, t)}</span>
-                <span>{formatDiffMileage(mileageDelta, t, intlLocale)}</span>
+                <span>{formatComparisonSummary(ageDelta, mileageDelta, t, intlLocale)}</span>
               </div>
             </div>
           )
@@ -655,6 +662,14 @@ function ComparableList({ valuation, configSnapshot, t, intlLocale }) {
 
 function formatDiffAge(deltaMonths, t) {
   return formatDiffMonths(deltaMonths, t)
+}
+
+function formatComparisonSummary(ageDelta, mileageDelta, t, intlLocale) {
+  if (!ageDelta && !mileageDelta) {
+    return t('result.comparisonBothSimilar')
+  }
+
+  return `${formatDiffAge(ageDelta, t)} · ${formatDiffMileage(mileageDelta, t, intlLocale)}`
 }
 
 function ResultState({ valuation, configSnapshot, isLoading, onBack, t, intlLocale }) {

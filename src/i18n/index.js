@@ -18,7 +18,7 @@ const MESSAGES = {
       variant: 'Variant',
       firstRegistrationMonth: 'First registration month',
       firstRegistrationYear: 'First registration year',
-      mileage: 'Mileage (km)',
+      mileage: 'Mileage',
       selectMonth: 'Select month',
       selectYear: 'Select year',
       taxType: 'Tax type',
@@ -29,9 +29,9 @@ const MESSAGES = {
       continue: 'Continue',
       back: 'Back',
       calculating: 'Calculating...',
-      showEstimatedPrice: 'Show estimated price',
+      showEstimatedPrice: 'Show estimated market value',
       mileageHint: '{value}k km',
-      mileageMaxHint: 'We currently support up to {max} km.'
+      mileageMaxHint: 'Max. {max} km'
     },
     result: {
       label: 'Result',
@@ -42,22 +42,25 @@ const MESSAGES = {
       errorTitle: 'Unable to estimate right now',
       statusNote: 'Try a slightly broader setup (variant, age, or tax type) and run again.',
       comparableCarsAria: 'Comparable cars',
-      comparablesHeading: 'Based on closest auction sales',
+      comparablesHeading: 'Based on real sales',
+      comparablesSubheading: 'Top 3 most similar sales',
       comparableLabel: 'Comparable {index}',
       loadingAria: 'Valuation loading state',
       loadingTitle: 'Calculating estimate',
       loadingCopy: 'Matching your car against recent Tesla auction sales...',
       finalAria: 'Valuation result',
-      finalTitle: 'Your estimated market price',
+      finalTitle: 'Your estimated market value',
       cohort: '{count} in cohort',
       editConfiguration: 'Edit configuration',
+      soldOn: 'Sold',
       unknownSaleDate: 'Unknown sale date',
-      sameAgeAtSale: 'Same age at sale',
-      olderAtSale: '{amount} {unit} older at sale',
-      newerAtSale: '{amount} {unit} newer at sale',
-      sameMileageAtSale: 'Same mileage at sale',
-      moreMileageAtSale: '{amount} km more at sale',
-      lessMileageAtSale: '{amount} km less at sale',
+      sameAgeAtSale: 'Same age',
+      olderAtSale: '{amount} {unit} older',
+      newerAtSale: '{amount} {unit} younger',
+      sameMileageAtSale: 'Mileage comparable',
+      moreMileageAtSale: '{amount} km more',
+      lessMileageAtSale: '{amount} km less',
+      comparisonBothSimilar: 'Age comparable, mileage comparable',
       monthSingular: 'month',
       monthPlural: 'months',
       fetchError: 'Failed to fetch valuation data. Please try again later.'
@@ -75,8 +78,8 @@ const MESSAGES = {
       },
       autopilot: {
         Standard: 'Standard',
-        EAP: 'EAP',
-        FSD: 'FSD'
+        EAP: 'Enhanced',
+        FSD: 'Full Self-Driving'
       },
       tire: {
         '4_summer': 'Summer',
@@ -123,10 +126,10 @@ const MESSAGES = {
       variant: 'Variante',
       firstRegistrationMonth: 'Erstzulassung Monat',
       firstRegistrationYear: 'Erstzulassung Jahr',
-      mileage: 'Kilometerstand (km)',
+      mileage: 'Kilometerstand',
       selectMonth: 'Monat wählen',
       selectYear: 'Jahr wählen',
-      taxType: 'Steuerart',
+      taxType: 'Verkaufsart',
       autopilot: 'Autopilot',
       tiresIncluded: 'Enthaltene Reifen',
       heatPump: 'Wärmepumpe',
@@ -134,9 +137,9 @@ const MESSAGES = {
       continue: 'Weiter',
       back: 'Zurück',
       calculating: 'Berechnung...',
-      showEstimatedPrice: 'Schätzpreis anzeigen',
+      showEstimatedPrice: 'Geschätzten Marktwert anzeigen',
       mileageHint: '{value}k km',
-      mileageMaxHint: 'Aktuell unterstützen wir bis zu {max} km.'
+      mileageMaxHint: 'Max. {max} km'
     },
     result: {
       label: 'Ergebnis',
@@ -147,22 +150,25 @@ const MESSAGES = {
       errorTitle: 'Bewertung aktuell nicht möglich',
       statusNote: 'Versuche eine etwas breitere Konfiguration (Variante, Alter oder Steuerart) und starte erneut.',
       comparableCarsAria: 'Vergleichsfahrzeuge',
-      comparablesHeading: 'Basierend auf den nächsten Auktionsverkäufen',
+      comparablesHeading: 'Basierend auf echten Verkäufen',
+      comparablesSubheading: 'Top 3 ähnlichste Verkäufe',
       comparableLabel: 'Vergleich {index}',
       loadingAria: 'Bewertung wird geladen',
       loadingTitle: 'Schätzung wird berechnet',
       loadingCopy: 'Dein Fahrzeug wird mit aktuellen Tesla-Auktionsverkäufen abgeglichen...',
       finalAria: 'Bewertungsergebnis',
-      finalTitle: 'Geschätzter Marktpreis',
-      cohort: '{count} in Vergleichsgruppe',
+      finalTitle: 'Geschätzter Marktwert',
+      cohort: '{count} vergleichbare Fahrzeuge',
       editConfiguration: 'Konfiguration bearbeiten',
+      soldOn: 'Verkauft',
       unknownSaleDate: 'Unbekanntes Verkaufsdatum',
-      sameAgeAtSale: 'Gleiches Alter beim Verkauf',
-      olderAtSale: '{amount} {unit} älter beim Verkauf',
-      newerAtSale: '{amount} {unit} jünger beim Verkauf',
-      sameMileageAtSale: 'Gleicher Kilometerstand beim Verkauf',
-      moreMileageAtSale: '{amount} km mehr beim Verkauf',
-      lessMileageAtSale: '{amount} km weniger beim Verkauf',
+      sameAgeAtSale: 'Gleiches Alter',
+      olderAtSale: '{amount} {unit} älter',
+      newerAtSale: '{amount} {unit} jünger',
+      sameMileageAtSale: 'Kilometerstand vergleichbar',
+      moreMileageAtSale: '{amount} km mehr',
+      lessMileageAtSale: '{amount} km weniger',
+      comparisonBothSimilar: 'Alter vergleichbar, Kilometerstand vergleichbar',
       monthSingular: 'Monat',
       monthPlural: 'Monate',
       fetchError: 'Bewertungsdaten konnten nicht geladen werden. Bitte später erneut versuchen.'
@@ -180,8 +186,8 @@ const MESSAGES = {
       },
       autopilot: {
         Standard: 'Standard',
-        EAP: 'EAP',
-        FSD: 'FSD'
+        EAP: 'Enhanced',
+        FSD: 'Full Self-Driving'
       },
       tire: {
         '4_summer': 'Sommer',
@@ -190,8 +196,8 @@ const MESSAGES = {
         '8_tires': '8 Reifen'
       },
       tax: {
-        margin: 'Privatverkauf',
-        vat: 'Firmenfahrzeug'
+        margin: 'Privat',
+        vat: 'Gewerblich'
       }
     },
     months: {
