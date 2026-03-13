@@ -29,8 +29,7 @@ const AUTOPILOT_CHOICES = [
 const TIRE_CHOICES = [
   { value: '4_summer', labelKey: 'choices.tire.4_summer' },
   { value: '4_winter', labelKey: 'choices.tire.4_winter' },
-  { value: '4_all_season', labelKey: 'choices.tire.4_all_season' },
-  { value: '8_tires', labelKey: 'choices.tire.8_tires' }
+  { value: '4_all_season', labelKey: 'choices.tire.4_all_season' }
 ]
 
 const TAX_CHOICES = [
@@ -59,7 +58,7 @@ const DEFAULT_CONFIG = {
   is_highland: null,
   tax_type: null,
   autopilot: null,
-  tire_strategy: null,
+  tire_strategy: [],
   has_heatpump: false,
   has_hitch: false,
   mileage: '',
@@ -94,9 +93,12 @@ function buildTargetCar(config) {
   const variant_clean = config.model === 'Model Y'
     ? `my_${config.variant_tier}`
     : `m3_${config.variant_tier}`
+  const tireSelections = Array.isArray(config.tire_strategy) ? config.tire_strategy : []
+  const resolvedTireStrategy = tireSelections.length <= 1 ? (tireSelections[0] ?? null) : '8_tires'
 
   return {
     ...config,
+    tire_strategy: resolvedTireStrategy,
     variant_clean,
     is_accident_free: true,
     mileage: Number(config.mileage),
@@ -159,15 +161,31 @@ function getOptionLabel(option, t) {
   return option.value
 }
 
-function ChoiceGroup({ options, value, onChange, t }) {
+function ChoiceGroup({ options, value, onChange, t, multiple = false }) {
+  const selectedValues = multiple && Array.isArray(value) ? value : []
+
+  const handleOptionClick = (optionValue) => {
+    if (!multiple) {
+      onChange(optionValue)
+      return
+    }
+
+    const isSelected = selectedValues.includes(optionValue)
+    const nextValues = isSelected
+      ? selectedValues.filter((entry) => entry !== optionValue)
+      : [...selectedValues, optionValue]
+
+    onChange(nextValues)
+  }
+
   return (
     <div className="choice-group" role="group">
       {options.map((option) => (
         <button
           type="button"
           key={option.value}
-          className={value === option.value ? 'choice active' : 'choice'}
-          onClick={() => onChange(option.value)}
+          className={multiple ? (selectedValues.includes(option.value) ? 'choice active' : 'choice') : (value === option.value ? 'choice active' : 'choice')}
+          onClick={() => handleOptionClick(option.value)}
         >
           {getOptionLabel(option, t)}
         </button>
@@ -568,7 +586,7 @@ function Configurator({
 
               <div className="field field-tires">
                 <label>{t('form.tiresIncluded')}</label>
-                <ChoiceGroup options={TIRE_CHOICES} value={config.tire_strategy} onChange={(value) => onChange({ tire_strategy: value })} t={t} />
+                <ChoiceGroup options={TIRE_CHOICES} value={config.tire_strategy} onChange={(value) => onChange({ tire_strategy: value })} t={t} multiple />
               </div>
 
               <div className="field two-columns toggles">
@@ -801,7 +819,8 @@ function DesktopDashboard() {
       !!config.variant_tier &&
       !!config.tax_type &&
       !!config.autopilot &&
-      !!config.tire_strategy &&
+      Array.isArray(config.tire_strategy) &&
+      config.tire_strategy.length > 0 &&
       config.first_registration_month !== '' &&
       config.first_registration_year !== '' &&
       config.mileage !== '' &&
