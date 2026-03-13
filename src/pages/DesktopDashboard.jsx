@@ -673,6 +673,8 @@ function formatComparisonSummary(ageDelta, mileageDelta, t, intlLocale) {
 }
 
 function ResultState({ valuation, configSnapshot, isLoading, onBack, t, intlLocale }) {
+  const offerCtaUrl = 'https://www.aampere.com/e-auto-verkaufen#Start'
+
   if (isLoading) {
     return (
       <section className="journey-card result-card" aria-label={t('result.loadingAria')}>
@@ -727,9 +729,20 @@ function ResultState({ valuation, configSnapshot, isLoading, onBack, t, intlLoca
 
       <ComparableList valuation={valuation} configSnapshot={configSnapshot} t={t} intlLocale={intlLocale} />
 
-      <button type="button" className="secondary-button" onClick={onBack}>
-        {t('result.editConfiguration')}
-      </button>
+      <div className="button-row">
+        <button type="button" className="secondary-button" onClick={onBack}>
+          {t('result.editConfiguration')}
+        </button>
+
+        <a
+          className="primary-button button-link"
+          href={offerCtaUrl}
+          target="_top"
+          rel="noopener noreferrer"
+        >
+          {t('result.getOfferNow')}
+        </a>
+      </div>
     </section>
   )
 }

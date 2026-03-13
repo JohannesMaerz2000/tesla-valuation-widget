@@ -417,6 +417,13 @@
   margin-top: 0;
 }
 
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .status-note {
   margin: 10px 0 0;
   color: #475569;
